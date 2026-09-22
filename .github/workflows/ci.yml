@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  domain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+      - name: Install domain dependencies
+        working-directory: packages/domain
+        run: dart pub get
+      - name: Analyze domain
+        working-directory: packages/domain
+        run: dart analyze
+      - name: Test domain
+        working-directory: packages/domain
+        run: dart test
