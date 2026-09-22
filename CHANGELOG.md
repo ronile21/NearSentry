@@ -2,6 +2,16 @@
 
 All notable NearSentry changes are recorded here.
 
+## [0.0.0.3] - 2026-09-22
+
+### Added
+- Long-lived `master` and `develop` branch model.
+- Branching strategy documentation.
+
+### Changed
+- CI now runs on `master` and `develop`.
+- Repository version advanced to `0.0.0.3`.
+
 ## [0.0.0.2] - 2026-09-22
 
 ### Added
