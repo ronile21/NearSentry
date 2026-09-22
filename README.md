@@ -4,7 +4,7 @@ NearSentry is an Android-first anti-loss / anti-theft application that monitors 
 
 ## Current version
 
-`0.1.0.0` — end-to-end MVP implementation baseline.
+`v0.0.0.1` — first NearSentry MVP version.
 
 ## Implemented product flow
 

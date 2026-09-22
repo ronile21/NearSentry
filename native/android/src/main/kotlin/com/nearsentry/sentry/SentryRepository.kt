@@ -27,7 +27,7 @@ data class TelemetryRecord(
     val rssi: Int?,
     val confidence: String?,
     val runtimeGeneration: Int,
-    val appVersion: String = "0.1.0.0",
+    val appVersion: String = "0.0.0.1",
 ) {
     fun toMap(): Map<String, Any?> = mapOf(
         "eventId" to eventId,

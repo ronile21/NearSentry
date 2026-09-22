@@ -98,7 +98,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 16),
         FilledButton(onPressed: _save, child: const Text('Save settings')),
         const SizedBox(height: 24),
-        const Text('NearSentry 0.1.0.0'),
+        const Text('NearSentry v0.0.0.1'),
       ],
     );
   }
