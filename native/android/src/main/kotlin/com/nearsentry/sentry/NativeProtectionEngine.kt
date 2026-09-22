@@ -138,13 +138,9 @@ class NativeProtectionEngine(
             }
 
             NativeProtectionState.ALARM -> when (event.type) {
-                NativeEventType.AUTHENTICATED_DISMISSAL, NativeEventType.DISARM -> {
+                NativeEventType.AUTHENTICATED_DISMISSAL -> {
                     next = NativeProtectionState.DISARMED
-                    reason = if (event.type == NativeEventType.AUTHENTICATED_DISMISSAL) {
-                        "alarm_authenticated_dismissal"
-                    } else {
-                        "disarm_requested"
-                    }
+                    reason = "alarm_authenticated_dismissal"
                 }
                 NativeEventType.ANCHOR_PRESENT ->
                     reason = "recovery_does_not_cancel_alarm"

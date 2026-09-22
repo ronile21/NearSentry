@@ -61,6 +61,18 @@ void main() {
       );
     });
 
+    test('ordinary disarm cannot dismiss an active alarm', () {
+      final engine = ProtectionEngine();
+      engine.apply(const ArmRequested(0));
+      engine.apply(const AnchorConfirmed(1));
+      engine.apply(const AnchorLost(2));
+      engine.apply(const GraceExpired(3000002));
+
+      final result = engine.apply(const DisarmRequested(4000000));
+      expect(result.accepted, isFalse);
+      expect(result.current, ProtectionState.alarm);
+    });
+
     test('runtime degradation requires revalidation after recovery', () {
       final engine = ProtectionEngine();
       engine.apply(const ArmRequested(0));

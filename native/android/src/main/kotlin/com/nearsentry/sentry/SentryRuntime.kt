@@ -129,6 +129,9 @@ class SentryRuntime private constructor(
     }
 
     fun disarm(source: String) {
+        if (engine.state == NativeProtectionState.ALARM) {
+            throw IllegalStateException("Active alarms require authenticated dismissal")
+        }
         transition(
             NativeEngineEvent(
                 NativeEventType.DISARM,
@@ -398,6 +401,14 @@ class SentryRuntime private constructor(
                 "payload" to repository.telemetry().firstOrNull(),
             ),
         )
+
+        if (result.current == NativeProtectionState.DISARMED &&
+            result.reason == "anchor_not_present_at_arm"
+        ) {
+            repository.setArmedIntended(false)
+            garminMonitor.stop()
+            handler.post { context.stopService(Intent(context, SentryService::class.java)) }
+        }
 
         when (result.current) {
             NativeProtectionState.GRACE -> scheduleGraceDeadline()

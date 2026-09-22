@@ -48,6 +48,39 @@ class _NearSentryAppState extends State<NearSentryApp> {
               body: Center(child: CircularProgressIndicator()),
             );
           }
+          if (_controller.error != null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('NearSentry')),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(28),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 56),
+                      const SizedBox(height: 18),
+                      Text(
+                        'Protection runtime unavailable',
+                        style: Theme.of(context).textTheme.headlineSmall,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _controller.error!,
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 20),
+                      FilledButton.icon(
+                        onPressed: _controller.initialize,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
           if (!_controller.settings.onboardingComplete) {
             return OnboardingScreen(
               onContinue: _controller.completeOnboarding,

@@ -38,6 +38,7 @@ final class ProtectionEngine {
         } else {
           accepted = false;
         }
+        break;
 
       case ProtectionState.arming:
         if (event is PrerequisitesValidated) {
@@ -61,6 +62,7 @@ final class ProtectionEngine {
         } else {
           accepted = false;
         }
+        break;
 
       case ProtectionState.protected:
         if (event is AnchorLost) {
@@ -84,6 +86,7 @@ final class ProtectionEngine {
         } else {
           accepted = false;
         }
+        break;
 
       case ProtectionState.grace:
         if (event is AnchorRecovered || event is AnchorConfirmed) {
@@ -111,20 +114,20 @@ final class ProtectionEngine {
         } else {
           accepted = false;
         }
+        break;
 
       case ProtectionState.alarm:
         if (event is AlarmDismissRequested) {
           reason = 'dismissal_authentication_required';
-        } else if (event is AlarmDismissed || event is DisarmRequested) {
+        } else if (event is AlarmDismissed) {
           next = ProtectionState.disarmed;
-          reason = event is AlarmDismissed
-              ? 'alarm_authenticated_dismissal'
-              : 'disarm_requested';
+          reason = 'alarm_authenticated_dismissal';
         } else if (event is AnchorRecovered) {
           reason = 'recovery_does_not_cancel_alarm';
         } else {
           accepted = false;
         }
+        break;
 
       case ProtectionState.degraded:
         if (event is DisarmRequested) {
@@ -140,6 +143,7 @@ final class ProtectionEngine {
         } else {
           accepted = false;
         }
+        break;
     }
 
     if (next != ProtectionState.grace) {
