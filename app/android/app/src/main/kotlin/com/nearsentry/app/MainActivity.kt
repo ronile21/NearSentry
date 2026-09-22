@@ -42,6 +42,10 @@ class MainActivity : FlutterFragmentActivity() {
                     "getSettings" -> result.success(runtime.settings())
                     "getRecentTelemetry" -> result.success(runtime.telemetry())
                     "getAvailableAnchors" -> result.success(runtime.availableAnchors())
+                    "pingWatch" -> {
+                        runtime.pingWatch()
+                        result.success(null)
+                    }
                     "testWatchAlarm" -> {
                         runtime.testWatchAlarm()
                         result.success(null)

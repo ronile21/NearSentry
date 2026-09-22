@@ -20,6 +20,7 @@ class DiagnosticsScreen extends StatelessWidget {
         _Row('Anchor status', snapshot.anchorStatus),
         _Row('Watch app status', snapshot.watchAppStatus),
         _Row('Watch last command', snapshot.watchLastCommand),
+        _Row('Watch last ACK', snapshot.watchLastAck),
         _Row('Simulation', snapshot.simulationMode.toString()),
         _Row('Message', snapshot.message),
         const SizedBox(height: 20),
@@ -32,6 +33,11 @@ class DiagnosticsScreen extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: [
+            OutlinedButton.icon(
+              onPressed: controller.pingWatch,
+              icon: const Icon(Icons.wifi_tethering),
+              label: const Text('Ping watch'),
+            ),
             OutlinedButton.icon(
               onPressed: controller.testWatchAlarm,
               icon: const Icon(Icons.watch),

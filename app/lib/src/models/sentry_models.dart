@@ -44,6 +44,7 @@ class SentrySnapshot {
     required this.runtimeGeneration,
     required this.watchAppStatus,
     required this.watchLastCommand,
+    required this.watchLastAck,
     required this.message,
     required this.graceRemainingMs,
     required this.prerequisites,
@@ -57,6 +58,7 @@ class SentrySnapshot {
   final int runtimeGeneration;
   final String watchAppStatus;
   final String watchLastCommand;
+  final String watchLastAck;
   final String message;
   final int? graceRemainingMs;
   final List<Prerequisite> prerequisites;
@@ -73,6 +75,7 @@ class SentrySnapshot {
         runtimeGeneration: 0,
         watchAppStatus: 'not_checked',
         watchLastCommand: 'none',
+        watchLastAck: 'none',
         message: 'Initializing protection runtime…',
         graceRemainingMs: null,
         prerequisites: <Prerequisite>[],
@@ -89,6 +92,7 @@ class SentrySnapshot {
       runtimeGeneration: (map['runtimeGeneration'] as num?)?.toInt() ?? 0,
       watchAppStatus: map['watchAppStatus']?.toString() ?? 'not_checked',
       watchLastCommand: map['watchLastCommand']?.toString() ?? 'none',
+      watchLastAck: map['watchLastAck']?.toString() ?? 'none',
       message: map['message']?.toString() ?? '',
       graceRemainingMs: (map['graceRemainingMs'] as num?)?.toInt(),
       prerequisites: rawPrerequisites is List

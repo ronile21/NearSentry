@@ -52,6 +52,9 @@ class SentryBridge {
   Future<void> enrollAnchor(String id) =>
       _methods.invokeMethod<void>('enrollAnchor', <String, Object>{'id': id});
 
+  Future<void> pingWatch() =>
+      _methods.invokeMethod<void>('pingWatch');
+
   Future<void> testWatchAlarm() =>
       _methods.invokeMethod<void>('testWatchAlarm');
 

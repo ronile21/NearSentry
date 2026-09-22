@@ -17,6 +17,13 @@ class GarminWatchMessenger(
             ConnectIQ.IQConnectType.WIRELESS,
         )
 
+    @Volatile
+    private var inboundListener: ((Map<String, Any?>) -> Unit)? = null
+
+    fun setInboundListener(listener: ((Map<String, Any?>) -> Unit)?) {
+        inboundListener = listener
+    }
+
     fun send(
         anchorId: String?,
         command: String,
@@ -64,6 +71,7 @@ class GarminWatchMessenger(
                 device,
                 object : ConnectIQ.IQApplicationInfoListener {
                     override fun onApplicationInfoReceived(app: IQApp) {
+                        registerInbound(device, app)
                         sendInstalled(
                             device = device,
                             app = app,
@@ -90,6 +98,48 @@ class GarminWatchMessenger(
         }
     }
 
+    private fun registerInbound(device: IQDevice, app: IQApp) {
+        try {
+            connectIQ.unregisterForApplicationEvents(device, app)
+        } catch (_: Exception) {
+        }
+
+        try {
+            connectIQ.registerForAppEvents(device, app) { _, _, message, status ->
+                Log.i(TAG, "Inbound app event status=${status.name} message=$message")
+                if (message.isEmpty()) {
+                    inboundListener?.invoke(
+                        mapOf(
+                            "type" to "EMPTY",
+                            "status" to status.name.lowercase(),
+                        ),
+                    )
+                    return@registerForAppEvents
+                }
+
+                message.forEach { item ->
+                    @Suppress("UNCHECKED_CAST")
+                    val parsed =
+                        if (item is Map<*, *>) {
+                            item.entries.associate { entry ->
+                                entry.key.toString() to entry.value
+                            }
+                        } else {
+                            mapOf(
+                                "type" to "RAW",
+                                "value" to item?.toString(),
+                            )
+                        }
+                    inboundListener?.invoke(
+                        parsed + ("transportStatus" to status.name.lowercase()),
+                    )
+                }
+            }
+        } catch (error: Exception) {
+            Log.e(TAG, "Unable to register for NearSentry watch app events", error)
+        }
+    }
+
     private fun sendInstalled(
         device: IQDevice,
         app: IQApp,
@@ -104,7 +154,6 @@ class GarminWatchMessenger(
             "command" to command,
             "graceMs" to graceMs,
             "reason" to reason,
-            "sentAt" to System.currentTimeMillis(),
         )
 
         try {

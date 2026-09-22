@@ -80,6 +80,12 @@ class ProtectionController extends ChangeNotifier {
     await refresh();
   }
 
+  Future<void> pingWatch() async {
+    await _bridge.pingWatch();
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    await refresh();
+  }
+
   Future<void> testWatchAlarm() async {
     await _bridge.testWatchAlarm();
     await Future<void>.delayed(const Duration(milliseconds: 300));

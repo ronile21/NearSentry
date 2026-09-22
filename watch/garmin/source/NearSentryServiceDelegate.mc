@@ -42,7 +42,11 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
             requestWake("NearSentry alarm - open app");
         }
 
-        Background.exit(data);
+        NearSentryTransport.sendBackgroundAck(
+            command,
+            "background_received",
+            data
+        );
     }
 
     function onTemporalEvent() as Void {

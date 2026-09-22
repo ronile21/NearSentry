@@ -28,10 +28,14 @@ class SentryRuntime private constructor(
     private var lastMessage = "Protection is off"
     private var lastWatchAppStatus = "not_checked"
     private var lastWatchCommand = "none"
+    private var lastWatchAck = "none"
     private var graceRunnable: Runnable? = null
     private var countdownRunnable: Runnable? = null
 
     init {
+        watchMessenger.setInboundListener { payload ->
+            handler.post { handleWatchInbound(payload) }
+        }
         engine.setGraceMs(repository.settings().graceSeconds * 1000L)
         engine.restoreAsDegradedIfArmed(repository.armedIntended())
         if (repository.armedIntended()) {
@@ -282,6 +286,14 @@ class SentryRuntime private constructor(
 
     fun telemetry(): List<Map<String, Any?>> = repository.telemetry()
 
+    fun pingWatch() {
+        sendWatchCommand(
+            command = "PING",
+            requestOpen = false,
+            reason = "manual_ping",
+        )
+    }
+
     fun testWatchAlarm() {
         sendWatchCommand(
             command = "TEST_ALARM",
@@ -312,6 +324,7 @@ class SentryRuntime private constructor(
             "runtimeGeneration" to runtimeGeneration,
             "watchAppStatus" to lastWatchAppStatus,
             "watchLastCommand" to lastWatchCommand,
+            "watchLastAck" to lastWatchAck,
             "message" to lastMessage,
             "graceRemainingMs" to remaining,
             "prerequisites" to prerequisites.snapshot(),
@@ -490,6 +503,20 @@ class SentryRuntime private constructor(
             }
         }
 
+        publishSnapshot()
+    }
+
+    private fun handleWatchInbound(payload: Map<String, Any?>) {
+        val type = payload["type"]?.toString()?.uppercase()
+        if (type == "ACK") {
+            val command = payload["command"]?.toString() ?: "unknown"
+            val status = payload["status"]?.toString() ?: "unknown"
+            val armed = payload["armed"]?.toString() ?: "unknown"
+            lastWatchAck = "$command / $status / armed=$armed"
+            lastWatchAppStatus = "watch:ack_received"
+        } else {
+            lastWatchAck = payload.toString()
+        }
         publishSnapshot()
     }
 

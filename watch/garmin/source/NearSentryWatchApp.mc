@@ -60,8 +60,12 @@ class NearSentryWatchApp extends Application.AppBase {
     }
 
     function onForegroundPhoneMessage(msg as Communications.PhoneAppMessage) as Void {
+        var command = NearSentryState.commandFrom(msg.data);
         if (_controller != null) {
             _controller.handlePhoneMessage(msg.data);
+        }
+        if (command != null) {
+            NearSentryTransport.sendAck(command, "foreground_received");
         }
     }
 
