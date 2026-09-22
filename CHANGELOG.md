@@ -17,6 +17,11 @@ All notable NearSentry product releases are recorded here.
 - Native/Dart state-machine architecture ADR and Garmin SDK ADR.
 - Physical-device validation matrix and developer guide.
 
+### Fixed
+- Dart 3.10 compile failure caused by a non-constant `Duration.isNegative` assertion in the const protection policy.
+- Deprecated Flutter radio selection API in trusted-device setup.
+- Android full-clean installer no longer requires a globally installed Gradle distribution and now validates the active version branch and direct ADB authorization.
+
 ### Validation note
 This implementation execution environment did not provide Flutter/Dart/Android SDK or Garmin hardware. Physical-device and build validation are therefore explicitly unverified here.
 

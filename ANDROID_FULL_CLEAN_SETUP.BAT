@@ -1,8 +1,9 @@
 @echo off
-setlocal EnableExtensions
+setlocal EnableExtensions EnableDelayedExpansion
 
 cd /d "%~dp0"
 
+set "EXPECTED_BRANCH=v0.0.0.1"
 set "APP_DIR=%CD%\app"
 set "DOMAIN_DIR=%CD%\packages\domain"
 set "PACKAGE_ID=com.nearsentry.app"
@@ -10,13 +11,31 @@ set "APK_PATH=%APP_DIR%\build\app\outputs\flutter-apk\app-debug.apk"
 
 echo.
 echo ============================================================
-echo  NearSentry - ANDROID FULL CLEAN SETUP
+echo  NearSentry v0.0.0.1 - ANDROID FULL CLEAN SETUP
 echo ============================================================
 echo.
+
+for /f "delims=" %%B in ('git branch --show-current 2^>nul') do set "CURRENT_BRANCH=%%B"
+if /i not "%CURRENT_BRANCH%"=="%EXPECTED_BRANCH%" (
+    echo [ERROR] Wrong Git branch.
+    echo         Current : %CURRENT_BRANCH%
+    echo         Required: %EXPECTED_BRANCH%
+    echo.
+    echo Run:
+    echo   git checkout %EXPECTED_BRANCH%
+    echo   git pull --ff-only origin %EXPECTED_BRANCH%
+    exit /b 1
+)
 
 where flutter >nul 2>&1
 if errorlevel 1 (
     echo [ERROR] Flutter is not available on PATH.
+    exit /b 1
+)
+
+where dart >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] Dart is not available on PATH.
     exit /b 1
 )
 
@@ -38,16 +57,30 @@ if not exist "%APP_DIR%\pubspec.yaml" (
     exit /b 1
 )
 
-echo [1/8] Stopping and removing existing NearSentry installation...
+echo [1/8] Verifying the directly connected Android device...
+adb get-state >nul 2>&1
+if errorlevel 1 (
+    echo [ERROR] The connected Android device is not authorized or not available to ADB.
+    echo.
+    echo Unlock the phone and approve:
+    echo   Allow USB debugging
+    echo.
+    echo Then run this BAT again.
+    exit /b 1
+)
+echo       ADB device is authorized.
+
+echo.
+echo [2/8] Stopping and removing existing NearSentry installation...
 adb shell am force-stop %PACKAGE_ID% >nul 2>&1
 adb uninstall %PACKAGE_ID% >nul 2>&1
 echo       Existing installation removed or was not installed.
 
 echo.
-echo [2/8] Cleaning Flutter and generated project artifacts...
+echo [3/8] Performing full local clean...
 pushd "%APP_DIR%"
 call flutter clean
-if errorlevel 1 goto :fail
+if errorlevel 1 goto :fail_pop
 popd
 
 if exist "%CD%\build" rmdir /s /q "%CD%\build"
@@ -57,45 +90,34 @@ if exist "%APP_DIR%\android\.gradle" rmdir /s /q "%APP_DIR%\android\.gradle"
 if exist "%DOMAIN_DIR%\.dart_tool" rmdir /s /q "%DOMAIN_DIR%\.dart_tool"
 
 echo.
-echo [3/8] Restoring domain dependencies...
+echo [4/8] Restoring domain dependencies...
 pushd "%DOMAIN_DIR%"
 call dart pub get
 if errorlevel 1 goto :fail_pop
 popd
 
 echo.
-echo [4/8] Restoring Flutter dependencies...
+echo [5/8] Running domain validation...
+pushd "%DOMAIN_DIR%"
+call dart analyze
+if errorlevel 1 goto :fail_pop
+call dart test
+if errorlevel 1 goto :fail_pop
+popd
+
+echo.
+echo [6/8] Restoring and validating Flutter application...
 pushd "%APP_DIR%"
 call flutter pub get
 if errorlevel 1 goto :fail_pop
-popd
-
-echo.
-echo [5/8] Ensuring Android Gradle wrapper exists...
-if not exist "%APP_DIR%\android\gradlew.bat" (
-    where gradle >nul 2>&1
-    if errorlevel 1 (
-        echo [ERROR] Android Gradle wrapper is missing and global Gradle is not available.
-        echo         Install Gradle 8.x or generate the wrapper once from Android Studio.
-        echo         Expected file: %APP_DIR%\android\gradlew.bat
-        exit /b 1
-    )
-
-    pushd "%APP_DIR%\android"
-    call gradle wrapper --gradle-version 8.10.2
-    if errorlevel 1 goto :fail_pop
-    popd
-)
-
-echo.
-echo [6/8] Cleaning Android Gradle build...
-pushd "%APP_DIR%\android"
-call gradlew.bat clean --no-daemon
+call flutter analyze
+if errorlevel 1 goto :fail_pop
+call flutter test
 if errorlevel 1 goto :fail_pop
 popd
 
 echo.
-echo [7/8] Building fresh Android debug APK...
+echo [7/8] Building a completely fresh Android debug APK...
 pushd "%APP_DIR%"
 call flutter build apk --debug
 if errorlevel 1 goto :fail_pop
@@ -108,12 +130,11 @@ if not exist "%APK_PATH%" (
 )
 
 echo.
-echo [8/8] Installing APK on the connected Android device...
+echo [8/8] Installing and launching NearSentry...
 adb install -r -d "%APK_PATH%"
 if errorlevel 1 goto :fail
 
-echo.
-echo Launching NearSentry...
+adb shell am force-stop %PACKAGE_ID% >nul 2>&1
 adb shell am start -n %PACKAGE_ID%/.MainActivity
 if errorlevel 1 goto :fail
 
@@ -121,13 +142,12 @@ echo.
 echo ============================================================
 echo  SUCCESS
 echo ============================================================
-echo  APK:
-echo  %APK_PATH%
+echo  Branch : %CURRENT_BRANCH%
+echo  APK    : %APK_PATH%
+echo  Package: %PACKAGE_ID%
 echo.
-echo  Package:
-echo  %PACKAGE_ID%
-echo.
-echo  NearSentry was rebuilt, installed and launched.
+echo  NearSentry was cleaned, validated, rebuilt, installed,
+echo  and launched on the connected Android device.
 echo ============================================================
 echo.
 exit /b 0
@@ -141,7 +161,7 @@ echo ============================================================
 echo  FAILED
 echo ============================================================
 echo  NearSentry full clean setup failed.
-echo  Review the error output above.
+echo  Review the FIRST error above. Later errors may be cascading.
 echo ============================================================
 echo.
 exit /b 1

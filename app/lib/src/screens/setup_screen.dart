@@ -16,7 +16,7 @@ class SetupScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snapshot = controller.snapshot;
-    final selected = snapshot.anchorName;
+    final selectedName = snapshot.anchorName;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Protection setup')),
@@ -53,15 +53,24 @@ class SetupScreen extends StatelessWidget {
               )
             else
               ...controller.anchors.map(
-                (anchor) => Card(
-                  child: RadioListTile<String>(
-                    value: anchor.id,
-                    groupValue: selected == anchor.name ? anchor.id : null,
-                    onChanged: (_) => controller.enrollAnchor(anchor.id),
-                    title: Text(anchor.name),
-                    subtitle: Text('Status: ${anchor.status}'),
-                  ),
-                ),
+                (anchor) {
+                  final selected = selectedName == anchor.name;
+                  return Card(
+                    child: ListTile(
+                      onTap: () => controller.enrollAnchor(anchor.id),
+                      leading: Icon(
+                        selected
+                            ? Icons.radio_button_checked
+                            : Icons.radio_button_unchecked,
+                      ),
+                      title: Text(anchor.name),
+                      subtitle: Text('Status: ${anchor.status}'),
+                      trailing: selected
+                          ? const Icon(Icons.check_circle)
+                          : const Icon(Icons.chevron_right),
+                    ),
+                  );
+                },
               ),
             const SizedBox(height: 24),
             OutlinedButton.icon(
