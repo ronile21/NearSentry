@@ -6,7 +6,8 @@ cd /d "%~dp0"
 set "EXPECTED_BRANCH=v0.0.0.1"
 set "WATCH_DIR=%CD%\watch\garmin"
 set "BUILD_DIR=%WATCH_DIR%\build"
-set "LOCAL_KEY=%WATCH_DIR%\developer_key.der"
+set "LOCAL_KEY_DER=%WATCH_DIR%\developer_key.der"
+set "LOCAL_KEY=%WATCH_DIR%\developer_key"
 set "OUTPUT=%BUILD_DIR%\NearSentry-fenix7x.prg"
 set "SDK_CFG=%APPDATA%\Garmin\ConnectIQ\current-sdk.cfg"
 
@@ -66,7 +67,8 @@ echo.
 set "KEY_DER="
 
 rem 1. Project-local key expected by NearSentry.
-if exist "%LOCAL_KEY%" set "KEY_DER=%LOCAL_KEY%"
+if exist "%LOCAL_KEY_DER%" set "KEY_DER=%LOCAL_KEY_DER%"
+if not defined KEY_DER if exist "%LOCAL_KEY%" set "KEY_DER=%LOCAL_KEY%"
 
 rem 2. Optional explicit key supplied by the developer.
 if not defined KEY_DER if defined CIQ_DEVELOPER_KEY (
@@ -82,9 +84,12 @@ if not defined KEY_DER (
     echo   1. Restart VS Code after installing the Garmin Monkey C extension.
     echo   2. Press Ctrl+Shift+P.
     echo   3. Run: Monkey C: Generate a Developer Key
-    echo   4. Save the key exactly as:
+    echo   4. Choose this folder:
     echo.
-    echo      %LOCAL_KEY%
+    echo      %WATCH_DIR%
+    echo.
+    echo The extension normally creates a file named developer_key.
+    echo developer_key.der is also accepted.
     echo.
     echo Then run this BAT again.
     echo.
