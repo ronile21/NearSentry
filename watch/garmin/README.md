@@ -49,7 +49,9 @@ The build output is:
 
 `watch\garmin\build\NearSentry-fenix7x.prg`
 
-A developer signing key is required. The build script uses `watch\garmin\developer_key.der`. If it is missing and OpenSSL is available, the script creates a local key. Developer keys are ignored by Git.
+A developer signing key is required. The build script first looks for `watch\garmin\developer_key.der`, then for the optional `CIQ_DEVELOPER_KEY` environment variable. If no key is available, use VS Code → Command Palette → **Monkey C: Generate a Developer Key** and save it as `watch\garmin\developer_key.der`. Developer keys are ignored by Git.
+
+The script supports both Connect IQ SDK layouts where `monkeyc.bat` is located in the SDK root (including SDK 9.2.0 on Windows) and older layouts where it is under `bin\`.
 
 ## Sideload
 

@@ -19,7 +19,13 @@ The build script reads:
 
 `%APPDATA%\Garmin\ConnectIQ\current-sdk.cfg`
 
-A Garmin developer signing key is also required. If none exists, `GARMIN_BUILD_WATCH.BAT` attempts to create a local key using OpenSSL. The generated key is intentionally ignored by Git.
+A Garmin developer signing key is also required. With the Garmin Monkey C VS Code extension installed, use **Ctrl+Shift+P → Monkey C: Generate a Developer Key** and save it as:
+
+`watch\garmin\developer_key.der`
+
+The build script can also use an existing key referenced by the `CIQ_DEVELOPER_KEY` environment variable. Keys are intentionally ignored by Git.
+
+Connect IQ SDK 9.2.0 on Windows may place `monkeyc.bat` directly in the SDK root rather than under `bin\`; the NearSentry build script supports both layouts.
 
 ## Build
 
