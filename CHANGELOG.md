@@ -17,6 +17,10 @@ All notable NearSentry product releases are recorded here.
 - Native/Dart state-machine architecture ADR and Garmin SDK ADR.
 - Physical-device validation matrix and developer guide.
 
+### Added
+- NearSentry Android launcher icon with shield/proximity visual identity.
+- `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
+
 ### Fixed
 - Dart 3.10 compile failure caused by a non-constant `Duration.isNegative` assertion in the const protection policy.
 - Deprecated Flutter radio selection API in trusted-device setup.
