@@ -22,6 +22,7 @@ All notable NearSentry product releases are recorded here.
 - `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
 
 ### Fixed
+- Android resource linking failure caused by invalid alarm-theme lock-screen style attributes; lock-screen/screen-on behavior remains implemented through the Activity API and manifest.
 - Dart 3.10 compile failure caused by a non-constant `Duration.isNegative` assertion in the const protection policy.
 - Deprecated Flutter radio selection API in trusted-device setup.
 - Android full-clean installer no longer requires a globally installed Gradle distribution and now validates the active version branch and direct ADB authorization.
