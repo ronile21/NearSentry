@@ -2,33 +2,42 @@
 
 ## Threat model
 
-Primary initial threat: a phone leaves the owner's immediate physical control while the trusted watch remains with the owner.
+Primary scenario: the Android phone leaves the owner's physical control while the trusted Garmin remains with the owner.
 
-## Security goals
+## Controls
 
-- detect separation quickly
-- make silent dismissal difficult
-- preserve monitoring across normal UI lifecycle changes
-- keep an auditable record of why escalation occurred
+- monitoring enforced by native foreground runtime
+- short monotonic grace deadline
+- local alarm audio/vibration
+- high-importance alarm notification/full-screen intent where permitted
+- authenticated dismissal using Android BiometricPrompt with BIOMETRIC_STRONG or DEVICE_CREDENTIAL
+- local transition audit trail
+- explicit degraded states
 
-## Non-goals / hard platform limits
+## Alarm rule
 
-A normal consumer Android application cannot guarantee prevention of:
-- hardware power-off
-- radio shutdown
-- factory reset
+Anchor recovery after ALARM does not silently stop the alarm. An authenticated dismissal or explicit authorized control action is required.
+
+## Biometric material
+
+NearSentry stores no fingerprint, face template, PIN, or device credential. Authentication is delegated to Android system APIs.
+
+## Hard platform limits
+
+NearSentry cannot guarantee prevention of:
+- device power-off
+- Bluetooth/radio shutdown
 - OS termination
-- recovery/bootloader actions
-- all notification suppression paths
+- factory reset
+- bootloader/recovery actions
+- every OEM notification/full-screen restriction
 
-NearSentry must not make claims that contradict Android platform control.
+Product claims must preserve those limits.
 
-## Alarm dismissal
+## Developer simulation
 
-Preferred policy is biometric/device-credential verification through Android system APIs. NearSentry never stores fingerprints or biometric templates.
+Simulation is visibly labeled and cannot be treated as production Garmin evidence. It exists to test UI, state and effect orchestration without hardware.
 
-Exact behavior while the device is locked must be validated against Android's allowed authentication and full-screen UI flows.
+## Privacy
 
-## Secrets
-
-No secrets are required for the local MVP. If cloud services are introduced later, credentials must never be committed to the repository.
+No cloud service or telemetry upload exists in the MVP.

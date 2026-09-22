@@ -1,25 +1,76 @@
 # Build and Run
 
-Version 0.0.0.1 is a repository skeleton, not yet a complete generated Flutter/Android application.
+## Toolchain
 
-## Prerequisites
+Required:
+- Flutter stable
+- Dart bundled with Flutter
+- JDK 17
+- Android SDK with API 35
+- Android platform tools / adb
+- Gradle wrapper generated for `app/android` if the wrapper JAR is not already present locally
 
-- Flutter stable SDK
-- Android Studio / Android SDK
-- JDK version supported by the selected Flutter/Gradle toolchain
+Garmin integration dependency:
+- `com.garmin.connectiq:ciq-companion-app-sdk:2.4.0@aar`
 
-## Initial workflow
+## First checkout
 
 ```powershell
-flutter --version
-dart --version
-cd packages/domain
+cd app
+flutter pub get
+
+cd ..\packages\domain
 dart pub get
 dart test
+dart analyze
+
+cd ..\..\app
+flutter analyze
+flutter test
 ```
 
-The app/native build procedure will be finalized when the Android wrapper and Kotlin service module are implemented.
+## Android wrapper bootstrap
 
-## Rule
+The repository stores wrapper configuration but does not commit a generated binary `gradle-wrapper.jar` from this execution environment.
 
-Do not claim background reliability from emulator-only testing. Real Android hardware is mandatory.
+If `app/android/gradle/wrapper/gradle-wrapper.jar` is absent:
+
+```powershell
+cd app\android
+gradle wrapper --gradle-version 8.10.2
+cd ..
+```
+
+Then:
+
+```powershell
+flutter build apk --debug
+flutter run
+```
+
+## Simulation mode
+
+1. complete onboarding/setup
+2. Settings -> Developer simulation mode
+3. select NearSentry Simulator
+4. arm
+5. Diagnostics -> inject disconnect/recovery/degraded/alarm/serviceRestart
+
+Simulation is not Garmin evidence.
+
+## Real Garmin
+
+1. install/update Garmin Connect
+2. pair/connect the Garmin normally
+3. grant NearSentry required permissions
+4. open setup and select the Garmin exposed by Connect IQ
+5. arm while watch is present
+6. execute the hardware validation matrix
+
+## Diagnostics
+
+Use the in-app Diagnostics/Event History plus:
+
+```powershell
+adb logcat | Select-String "NearSentry|ConnectIQ"
+```

@@ -1,0 +1,8 @@
+<resources>
+    <style name="NearSentryAlarmTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowShowWhenLocked">true</item>
+        <item name="android:windowTurnScreenOn">true</item>
+        <item name="android:colorAccent">#FFFFFF</item>
+    </style>
+</resources>

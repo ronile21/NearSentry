@@ -2,29 +2,38 @@
 
 ## Purpose
 
-Telemetry exists to explain reliability, not to track the user.
+Explain protection behavior and support reliability debugging without uploading user data.
 
-## Event fields
+## Fields
 
+Every accepted transition records:
 - eventId
-- monotonic timestamp
-- wall timestamp for display
-- previous state
-- next state
-- trigger/cause
-- anchor identifier (non-secret local ID)
-- observation source
-- optional RSSI
-- confidence/status
-- grace deadline when relevant
-- runtime/process generation
-- app version
-- Android version/device model
+- wallTimestamp
+- monotonicMs
+- previousState
+- nextState
+- trigger
+- source
+- detail
+- anchorId
+- optional rssi
+- optional confidence
+- runtimeGeneration
+- appVersion
+
+## Runtime generation
+
+Each foreground-service creation increments a local runtime generation so process/service restarts are visible in history.
 
 ## Storage
 
-MVP telemetry is local and bounded by retention limits.
+- local only
+- JSON-backed bounded journal
+- configurable retention 50–1000 events
+- default 250
+
+Malformed journal data is discarded locally rather than treated as valid protection history.
 
 ## Privacy
 
-No cloud upload is part of the MVP. Any future upload requires a separate product/security decision and explicit user-facing policy.
+No telemetry backend, analytics SDK, or upload path is present in the MVP.

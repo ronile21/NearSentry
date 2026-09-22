@@ -1,30 +1,40 @@
 # Android Background Execution Design
 
-## Requirement
+## Foreground service
 
-NearSentry must not rely on a normal background Dart isolate as the sole sentry runtime.
+When armed, `SentryService` runs as an Android foreground service with:
 
-## Initial design
+- `android:foregroundServiceType="connectedDevice"`
+- `FOREGROUND_SERVICE`
+- `FOREGROUND_SERVICE_CONNECTED_DEVICE`
+- runtime `BLUETOOTH_CONNECT` prerequisite on modern Android
 
-When armed, NearSentry runs an Android foreground service with a persistent notification and the minimum required foreground-service type/permissions for the final implementation.
+This matches Android's connected-device foreground-service model.
 
-The service owns:
-- armed state
-- anchor observation subscription
-- grace deadline
-- alarm transition
-- durable event logging
+## Ownership
 
-## Platform constraints
+The service/native runtime owns:
+- active anchor monitoring
+- native monotonic grace timer
+- alarm escalation
+- durable armed intent
+- telemetry
+- service runtime generation
 
-Modern Android versions aggressively constrain background work, exact alarms, Bluetooth permissions, notification behavior, and full-screen intents. OEMs can add additional battery restrictions.
+Flutter may disappear without becoming a protection-state event.
 
-NearSentry must test behavior on real Samsung/Pixel devices and document required user settings.
+## Process/service recreation
 
-## Restart behavior
+If process state is rebuilt while protection was intentionally armed:
+1. do not claim PROTECTED
+2. enter degraded/revalidation semantics
+3. restart monitor under the foreground service
+4. require a fresh anchor observation
 
-Service/process death must be detected and recorded. Restoration policy must never silently claim protection is active when monitoring was not restored successfully.
+## OEM limits
+
+A foreground service materially improves survivability but is not an OS-level guarantee. Samsung/Pixel/OEM battery controls must be validated on physical devices. The UI exposes battery optimization status as a recommended prerequisite.
 
 ## Reboot
 
-Reboot auto-rearm is not assumed. It requires an explicit ADR after security, permission, and UX behavior are validated.
+Automatic reboot re-arm remains intentionally unimplemented because the existing product requirements require a separate policy/ADR before enabling it.

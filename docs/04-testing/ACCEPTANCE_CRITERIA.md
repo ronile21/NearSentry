@@ -1,14 +1,25 @@
 # MVP Acceptance Criteria
 
-The MVP is not accepted until all critical requirements below pass on the declared support matrix.
+## Source/software criteria
 
-- **AC-001** Protection remains active after Flutter UI is backgrounded/recreated.
-- **AC-002** Confirmed anchor loss enters grace and records the cause.
-- **AC-003** Recovery before deadline cancels escalation.
-- **AC-004** Grace expiry enters alarm exactly once.
-- **AC-005** Alarm remains active until an allowed verified dismissal path succeeds.
-- **AC-006** Every transition is visible in local diagnostics.
-- **AC-007** Bluetooth off, permission loss, and service failure produce explicit degraded/failure states.
-- **AC-008** No supported normal lifecycle event silently disarms protection.
-- **AC-009** Battery impact is measured during soak testing.
-- **AC-010** Supported Garmin/Android combinations are listed from actual testing.
+- **AC-001** Native service owns active monitoring independently of Flutter UI lifecycle.
+- **AC-002** Confirmed absence from PROTECTED enters GRACE.
+- **AC-003** PRESENT before the original deadline returns to PROTECTED.
+- **AC-004** Repeated ABSENT does not extend the deadline.
+- **AC-005** Deadline expiry enters ALARM exactly once.
+- **AC-006** Anchor recovery does not silently dismiss ALARM.
+- **AC-007** Production dismissal requires Android system authentication.
+- **AC-008** Every accepted transition is journaled locally.
+- **AC-009** Bluetooth/permission/runtime uncertainty cannot be presented as healthy PROTECTED.
+- **AC-010** Simulator is visibly identified as simulated.
+- **AC-011** Settings and enrolled anchor persist locally.
+
+## Hardware/reliability criteria
+
+Not accepted until physical-device evidence exists:
+
+- **AC-100** Garmin status events correctly represent real separation/recovery on each supported watch.
+- **AC-101** Protection survives declared Samsung/Pixel screen-off/background test matrix.
+- **AC-102** Alarm behavior is confirmed on target Android versions/OEMs.
+- **AC-103** Battery impact is measured in soak testing.
+- **AC-104** Supported Garmin/Android compatibility matrix is based on actual devices, not assumptions.

@@ -2,41 +2,39 @@
 
 ## States
 
-### DISARMED
-No protection is active.
-
-### ARMING
-Prerequisites are being validated and trusted anchor presence is being established.
-
-### PROTECTED
-Anchor is considered present and monitoring is healthy.
-
-### GRACE
-Anchor presence was lost. A deadline is active.
-
-### ALARM
-Grace expired without acceptable recovery; escalation is active.
-
-### DEGRADED
-Monitoring cannot currently produce a trustworthy signal.
+- **DISARMED** — no protection active.
+- **ARMING** — runtime is validating prerequisites and trusted-anchor presence.
+- **PROTECTED** — monitoring healthy and anchor present.
+- **GRACE** — anchor absent and a monotonic deadline is active.
+- **ALARM** — deadline expired without recovery.
+- **DEGRADED** — monitoring cannot produce a trustworthy signal.
 
 ## Core transitions
 
 - DISARMED + arm -> ARMING
-- ARMING + prerequisites/anchor confirmed -> PROTECTED
-- ARMING + validation failure -> DISARMED with reason
-- PROTECTED + anchor lost -> GRACE
-- GRACE + anchor recovered -> PROTECTED
-- GRACE + grace expired -> ALARM
-- ALARM + verified dismissal -> DISARMED or PROTECTED according to explicit policy
-- any armed state + runtime health failure -> DEGRADED according to policy
+- ARMING + anchor present -> PROTECTED
+- ARMING + anchor absent -> DISARMED
+- PROTECTED + anchor absent -> GRACE
+- GRACE + anchor present -> PROTECTED
+- GRACE + grace deadline reached -> ALARM
+- ALARM + authenticated dismissal -> DISARMED
+- ALARM + anchor recovery -> ALARM
+- any armed monitoring state + runtime failure -> DEGRADED
+- DEGRADED + runtime recovery -> ARMING, then anchor must be revalidated
+- any non-disarmed state + explicit disarm -> DISARMED
 
-## Important invariant
+## Timing invariant
 
-A Flutter lifecycle event is never a protection-state event by itself.
+Grace deadlines use monotonic elapsed time:
+- Dart reference: caller-provided monotonic microseconds
+- Android enforcement: `SystemClock.elapsedRealtime()`
 
-## Timing
+Wall-clock changes do not extend or shorten an active grace period.
 
-The grace interval is policy data. Initial development target: 3 seconds, subject to measured radio behavior and false-positive testing.
+## Duplicate events
 
-A monotonic clock must be used for deadlines; wall-clock changes must not alter an active grace countdown.
+Repeated absent observations while already in GRACE do not extend the original deadline. Repeated ALARM effects are idempotent.
+
+## Process recovery
+
+Persisted `armedIntended=true` does not restore a false PROTECTED state. A recreated native runtime starts DEGRADED/ARMING and requires fresh monitor validation.

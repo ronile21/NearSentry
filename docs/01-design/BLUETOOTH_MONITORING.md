@@ -1,46 +1,59 @@
-# Bluetooth / Anchor Monitoring Design
+# Bluetooth / Garmin Monitoring Design
 
-## Goal
+## Selected source
 
-Produce a normalized anchor-presence signal with confidence and cause.
+The first production adapter uses Garmin's official Connect IQ Companion App SDK for Android.
 
-## Important risk
+It uses:
+- SDK initialization against Garmin Connect
+- known-device enumeration
+- device-status queries
+- device event registration
 
-A paired Garmin being connected through Garmin Connect does not automatically mean a third-party Android app can own or inspect a stable GATT connection in the way NearSentry needs.
+The adapter normalizes Garmin status to:
+- present
+- absent
+- unknown
 
-Therefore the Garmin presence mechanism is a feasibility item, not a solved assumption.
+## Why this path
 
-## Candidate signal sources
+NearSentry must not assume:
+- paired == currently present
+- Garmin Connect's private Bluetooth connection is an arbitrary GATT connection NearSentry can own
+- RSSI == physical distance
+- BLE advertisements are stable across Garmin models
 
-- Android Bluetooth connection/profile state where accessible.
-- BLE scan/advertisement observation where the Garmin model exposes a usable stable signal.
-- Companion protocol through a Garmin Connect IQ application.
-- Multi-signal fusion if no single signal is reliable enough.
+The Connect IQ companion SDK is the vendor-supported application integration surface for Garmin device status.
 
-## Normalized observation
+## Observation model
 
-An observation should include:
-- anchorId
-- timestampMonotonic
-- status: present / absent / unknown
-- signalSource
+Each observation includes:
+- anchor ID
+- monotonic timestamp
+- normalized status
+- signal source
 - optional RSSI
 - confidence
 - diagnostic reason
 
-## Rule
+Current Garmin adapter does not use RSSI.
 
-RSSI alone must not be interpreted as physical distance. It is noisy and environment-dependent.
+## Unknown behavior
 
-## Testing
+Connect IQ initialization failure, Garmin Connect service unavailability, missing enrolled device, or unrecognized status produces UNKNOWN and therefore explicit degraded protection rather than false health.
 
-Test:
-- phone screen on/off
-- app foreground/background
-- Garmin Connect running/not running
-- Bluetooth toggled
-- airplane mode
+## Watch companion
+
+A watch-side Connect IQ app is not required for the first phone-side presence detector. Watch-side vibration/alarm remains outside verified MVP behavior until implemented and tested against Garmin device APIs.
+
+## Required physical validation
+
+- screen on/off
+- Flutter app foreground/background/killed
+- Garmin Connect foreground/background
+- real separation and reconnection
 - watch reboot
 - phone reboot
-- transient RF obstruction
-- different Samsung/Pixel power modes
+- Bluetooth toggle
+- battery saver/OEM optimization
+- multi-hour/day soak

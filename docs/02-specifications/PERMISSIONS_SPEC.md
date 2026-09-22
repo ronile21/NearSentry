@@ -1,25 +1,35 @@
 # Android Permissions Specification
 
-Exact manifest declarations depend on the final minimum/target SDK and selected Bluetooth implementation.
+## Manifest permissions
 
-Expected permission families may include:
-- Bluetooth scan/connect runtime permissions on modern Android
-- notifications
-- foreground service
-- vibration
-- boot receiver only if a later ADR approves reboot behavior
-- full-screen intent only if product behavior and Play policy allow it
+- `BLUETOOTH` / `BLUETOOTH_ADMIN` for Android <= 11 compatibility
+- `BLUETOOTH_CONNECT` for modern connected-device access
+- `POST_NOTIFICATIONS` on Android 13+
+- `FOREGROUND_SERVICE`
+- `FOREGROUND_SERVICE_CONNECTED_DEVICE`
+- `VIBRATE`
+- `WAKE_LOCK`
+- `USE_FULL_SCREEN_INTENT`
 
-## Rule
+## Required at arm time
 
-Do not request permissions preemptively. Each permission must map to a documented feature and Android-version condition.
+- Bluetooth enabled
+- BLUETOOTH_CONNECT granted when runtime permission applies
+- notification permission/enabled when runtime permission applies
 
-## UX
+## Recommended/conditional
 
-The onboarding screen must distinguish:
-- required permission missing
-- permission permanently denied
-- battery optimization risk
-- Bluetooth disabled
-- anchor unavailable
-- service unhealthy
+- battery optimization exemption: recommended because OEM policies can interrupt monitoring
+- full-screen intent capability: preferred for alarm UX but Android may restrict it
+
+## UX behavior
+
+Every prerequisite exposes:
+- stable ID
+- user-facing label
+- current state
+- required/recommended classification
+- explanation
+- action path when available
+
+No permission is requested solely because it might be useful later.

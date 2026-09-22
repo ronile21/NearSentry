@@ -1,29 +1,28 @@
 # Alarm Policy
 
-## Development default
+## Defaults
 
-- Grace duration: 3 seconds.
-- Escalation target: phone first.
-- Watch-side escalation: pending Garmin companion feasibility.
+- grace interval: 3 seconds
+- allowed configurable range: 1–15 seconds
+- phone-side alarm enabled by default
+- sound enabled by default
+- vibration enabled by default
 
-## Phone escalation
+## Escalation
 
-Expected effects, subject to Android restrictions:
-- high-priority ongoing alarm notification
-- audible alarm at the strongest policy-compliant volume path
-- vibration pattern
-- full-screen alarm UI where allowed
+On transition to ALARM:
+- create/update high-importance alarm notification
+- request full-screen alarm surface where Android permits
+- play the system alarm ringtone in looping mode where supported
+- start repeating vibration waveform
+- keep alarm effects idempotent
 
 ## Dismissal
 
-Production target:
-- biometric or device credential via Android system authentication
-- dismissal action recorded
+- production: BIOMETRIC_STRONG or DEVICE_CREDENTIAL through Android BiometricPrompt
+- developer simulation does not introduce an unsecured production dismissal path
+- anchor recovery after escalation does not dismiss alarm
 
-## False-positive handling
+## Platform limitation
 
-Do not silently lengthen grace windows to hide radio instability. First classify the signal source and improve presence confidence.
-
-## Safety / UX
-
-Provide an explicit development mode during engineering so alarm testing can be stopped safely without weakening the production policy.
+Full-screen intent permission/capability is OS/policy-controlled. If denied, notification/audio/vibration still provide escalation. Physical-device behavior must be validated.

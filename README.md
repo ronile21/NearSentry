@@ -1,45 +1,42 @@
 # NearSentry
 
-NearSentry is a mobile anti-loss and anti-theft sentry that monitors proximity to one or more trusted devices and reacts when a protected device is separated from its trusted anchor.
-
-The first MVP targets Android + Garmin as the trusted Bluetooth anchor. The architecture is intentionally device-agnostic so additional watches, earbuds, tags, and Bluetooth devices can be supported later.
+NearSentry is an Android-first anti-loss / anti-theft application that monitors separation between a protected phone and a trusted Garmin device.
 
 ## Current version
 
-`0.0.0.1` — repository initialization and architecture baseline.
+`0.1.0.0` — end-to-end MVP implementation baseline.
 
-## Core invariant
+## Implemented product flow
 
-When protection is armed:
+1. Complete onboarding and Android prerequisite checks.
+2. Select a Garmin device exposed by Garmin Connect IQ.
+3. Arm protection.
+4. Android native foreground runtime monitors the anchor independently of Flutter UI lifecycle.
+5. Anchor loss enters a configurable monotonic grace period (default: 3 seconds).
+6. Recovery during grace cancels escalation.
+7. Grace expiry starts a loud/vibrating phone alarm and high-priority/full-screen notification path where Android permits it.
+8. Alarm dismissal requires Android biometric/device-credential authentication.
+9. Every important transition is recorded in a bounded local event journal.
 
-1. A trusted anchor is connected/present.
-2. The anchor becomes unavailable.
-3. NearSentry starts a configurable grace window.
-4. If the anchor does not recover before the grace window expires, the native sentry escalates.
-5. Recovery inside the grace window cancels escalation.
+## Architecture
 
-## Architecture direction
+- `app/` — Flutter Material 3 application and Android host.
+- `packages/domain/` — pure Dart deterministic domain/reference state machine.
+- `native/android/` — Kotlin foreground runtime, Garmin adapter, persistence, alarm and native state engine.
+- `docs/` — product, design, specifications, ADRs, testing, operations, and permanent version history.
+- `.agents/` — repository-native autonomous engineering contracts.
+- `scripts/` — verification/bootstrap utilities.
 
-- Flutter: application UI, settings, onboarding, history, presentation.
-- Android/Kotlin: always-on sentry service, Bluetooth observation, alarm escalation, device-level integrations.
-- Pure domain model: deterministic protection state machine and alarm policy.
-- Platform bridge: explicit contract between Flutter and Android native code.
+## Development simulation
 
-## Repository layout
+Settings → Developer simulation mode exposes deterministic connected/disconnected/recovery/degraded/alarm/service-restart scenarios. Simulated status is deliberately labeled and must never be interpreted as verified Garmin protection.
 
-- `app/` — Flutter application shell.
-- `native/android/` — Android-native sentry components.
-- `packages/domain/` — platform-independent domain contracts/state model.
-- `docs/` — product requirements, architecture/design, ADRs, specifications, testing, operations, and version history.
-- `scripts/` — local verification/bootstrap scripts.
-- `.github/workflows/` — CI.
+## Build
 
-See [docs/README.md](docs/README.md) for the documentation index.
+See `docs/06-operations/DEVELOPER_GUIDE.md` and `docs/06-operations/BUILD_AND_RUN.md`.
 
-## Engineering rule
+## Important validation boundary
 
-No important product or architectural decision should live only in chat, code comments, or memory. It must be captured in `docs/` and, when architectural, in an ADR.
+Garmin source integration uses the official Connect IQ Companion App SDK. Real-watch behavior, Samsung/Pixel background survival, battery impact, and Android full-screen alarm behavior require physical-device validation before any production reliability claim.
 
-## License
-
-No open-source license is granted unless a LICENSE file is explicitly added later.
+No open-source license is granted unless a LICENSE file is explicitly added.
