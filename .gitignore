@@ -29,3 +29,15 @@ Thumbs.db
 *.keystore
 *.jks
 key.properties
+
+# Generated dependency lock files
+app/pubspec.lock
+packages/domain/pubspec.lock
+
+# Flutter-generated Android bootstrap files
+app/android/gradlew
+app/android/gradlew.bat
+app/android/gradle/wrapper/gradle-wrapper.jar
+
+# Flutter-generated plugin registration
+app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
