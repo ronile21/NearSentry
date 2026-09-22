@@ -1,5 +1,6 @@
 using Toybox.Application.Storage as Storage;
 using Toybox.Background as Background;
+using Toybox.Communications as Communications;
 using Toybox.System as System;
 using Toybox.Time as Time;
 
@@ -9,7 +10,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         System.ServiceDelegate.initialize();
     }
 
-    function onPhoneAppMessage(msg) {
+    function onPhoneAppMessage(msg as Communications.PhoneAppMessage) as Void {
         var data = msg.data;
         var command = NearSentryState.commandFrom(data);
 
@@ -44,7 +45,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         Background.exit(data);
     }
 
-    function onTemporalEvent() {
+    function onTemporalEvent() as Void {
         if (!NearSentryState.isArmed()) {
             stopTemporalMonitor();
             Background.exit(null);
@@ -66,7 +67,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         Background.exit(null);
     }
 
-    function ensureTemporalMonitor() {
+    function ensureTemporalMonitor() as Void {
         try {
             Background.registerForTemporalEvent(new Time.Duration(5 * 60));
         } catch (error) {
@@ -74,7 +75,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         }
     }
 
-    function stopTemporalMonitor() {
+    function stopTemporalMonitor() as Void {
         try {
             Background.deleteTemporalEvent();
         } catch (error) {
@@ -82,7 +83,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         }
     }
 
-    function requestWake(message) {
+    function requestWake(message) as Void {
         try {
             Background.requestApplicationWake(message);
         } catch (error) {

@@ -18,11 +18,11 @@ class NearSentryWatchApp extends Application.AppBase {
         _pendingData = null;
     }
 
-    function onStart(state) {
+    function onStart(state) as Void {
         registerBackgroundEvents();
     }
 
-    function onStop(state) {
+    function onStop(state) as Void {
         if (_controller != null) {
             _controller.shutdown();
         }
@@ -59,13 +59,13 @@ class NearSentryWatchApp extends Application.AppBase {
         return [new NearSentryServiceDelegate()];
     }
 
-    function onForegroundPhoneMessage(msg) {
+    function onForegroundPhoneMessage(msg as Communications.PhoneAppMessage) as Void {
         if (_controller != null) {
             _controller.handlePhoneMessage(msg.data);
         }
     }
 
-    function onBackgroundData(data) {
+    function onBackgroundData(data) as Void {
         if (data == null) {
             return;
         }
@@ -77,27 +77,27 @@ class NearSentryWatchApp extends Application.AppBase {
         }
     }
 
-    function onStorageChanged() {
+    function onStorageChanged() as Void {
         if (_controller != null) {
             _controller.restoreState();
         }
     }
 
-    function onDeviceSettingChanged(aSymbol, aValue) {
+    function onDeviceSettingChanged(aSymbol, aValue) as Void {
         if (aSymbol == :phoneConnected && _controller != null) {
             _controller.onPhoneConnectedChanged(aValue);
         }
     }
 
-    function onAppInstall() {
+    function onAppInstall() as Void {
         registerBackgroundEvents();
     }
 
-    function onAppUpdate() {
+    function onAppUpdate() as Void {
         registerBackgroundEvents();
     }
 
-    function registerBackgroundEvents() {
+    function registerBackgroundEvents() as Void {
         try {
             Background.registerForPhoneAppMessageEvent();
 

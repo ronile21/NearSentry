@@ -21,7 +21,7 @@ class NearSentryController {
         restoreState();
     }
 
-    function shutdown() {
+    function shutdown() as Void {
         try {
             _connectionTimer.stop();
         } catch (error) {
@@ -32,7 +32,7 @@ class NearSentryController {
         }
     }
 
-    function restoreState() {
+    function restoreState() as Void {
         var connected = System.getDeviceSettings().phoneConnected;
         _view.setPhoneConnected(connected);
         _view.setArmed(NearSentryState.isArmed());
@@ -48,7 +48,7 @@ class NearSentryController {
         WatchUi.requestUpdate();
     }
 
-    function handlePhoneMessage(data) {
+    function handlePhoneMessage(data) as Void {
         var command = NearSentryState.commandFrom(data);
         if (command == null) {
             return;
@@ -82,7 +82,7 @@ class NearSentryController {
         WatchUi.requestUpdate();
     }
 
-    function onPhoneConnectedChanged(connected) {
+    function onPhoneConnectedChanged(connected) as Void {
         _view.setPhoneConnected(connected);
 
         if (!NearSentryState.isArmed() || _alarmActive) {
@@ -99,7 +99,7 @@ class NearSentryController {
         WatchUi.requestUpdate();
     }
 
-    function pollConnection() {
+    function pollConnection() as Void {
         var connected = System.getDeviceSettings().phoneConnected;
         _view.setPhoneConnected(connected);
 
@@ -133,7 +133,7 @@ class NearSentryController {
         WatchUi.requestUpdate();
     }
 
-    function startAlarm(reason) {
+    function startAlarm(reason) as Void {
         if (_alarmActive) {
             return;
         }
@@ -151,7 +151,7 @@ class NearSentryController {
         WatchUi.requestUpdate();
     }
 
-    function stopAlarm(clearPending) {
+    function stopAlarm(clearPending) as Void {
         if (_alarmActive) {
             try {
                 _alarmTimer.stop();
@@ -167,7 +167,7 @@ class NearSentryController {
         WatchUi.requestUpdate();
     }
 
-    function pulseAlarm() {
+    function pulseAlarm() as Void {
         if (!_alarmActive) {
             return;
         }
