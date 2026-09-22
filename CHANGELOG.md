@@ -5,6 +5,8 @@ All notable NearSentry product releases are recorded here.
 ## [0.0.0.1] - 2026-09-22
 
 ### Added
+- Fenix 7X Connect IQ companion app with synchronized armed state, foreground phone-disconnect detection, watch vibration/tone alarm, background phone-message handling, five-minute Garmin background fallback, diagnostics and build tooling.
+- Android-to-watch command bridge using the official Garmin Connect IQ Mobile SDK and the shared NearSentry watch application ID.
 - First end-to-end NearSentry MVP.
 - Flutter Material 3 application with onboarding, setup, dashboard, grace/alarm UX, history, settings, and diagnostics.
 - Deterministic pure Dart protection engine with explicit invalid transitions and monotonic grace deadlines.

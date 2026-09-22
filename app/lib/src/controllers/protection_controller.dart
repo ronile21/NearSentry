@@ -80,6 +80,18 @@ class ProtectionController extends ChangeNotifier {
     await refresh();
   }
 
+  Future<void> testWatchAlarm() async {
+    await _bridge.testWatchAlarm();
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await refresh();
+  }
+
+  Future<void> stopWatchAlarm() async {
+    await _bridge.stopWatchAlarm();
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    await refresh();
+  }
+
   Future<void> arm() async {
     await _bridge.arm();
     await refresh();

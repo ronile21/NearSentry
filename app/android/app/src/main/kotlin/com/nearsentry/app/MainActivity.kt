@@ -42,6 +42,14 @@ class MainActivity : FlutterFragmentActivity() {
                     "getSettings" -> result.success(runtime.settings())
                     "getRecentTelemetry" -> result.success(runtime.telemetry())
                     "getAvailableAnchors" -> result.success(runtime.availableAnchors())
+                    "testWatchAlarm" -> {
+                        runtime.testWatchAlarm()
+                        result.success(null)
+                    }
+                    "stopWatchAlarm" -> {
+                        runtime.stopWatchAlarm()
+                        result.success(null)
+                    }
                     "enrollAnchor" -> {
                         runtime.enrollAnchor(call.argument<String>("id").orEmpty())
                         result.success(null)

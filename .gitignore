@@ -41,3 +41,8 @@ app/android/gradle/wrapper/gradle-wrapper.jar
 
 # Flutter-generated plugin registration
 app/android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# Garmin Connect IQ local build/signing artifacts
+watch/garmin/build/
+watch/garmin/developer_key.der
+watch/garmin/developer_key.pem

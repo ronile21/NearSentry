@@ -18,8 +18,32 @@ class DiagnosticsScreen extends StatelessWidget {
         _Row('Runtime generation', snapshot.runtimeGeneration.toString()),
         _Row('Anchor', snapshot.anchorName ?? 'none'),
         _Row('Anchor status', snapshot.anchorStatus),
+        _Row('Watch app status', snapshot.watchAppStatus),
+        _Row('Watch last command', snapshot.watchLastCommand),
         _Row('Simulation', snapshot.simulationMode.toString()),
         _Row('Message', snapshot.message),
+        const SizedBox(height: 20),
+        Text(
+          'Garmin watch app',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            OutlinedButton.icon(
+              onPressed: controller.testWatchAlarm,
+              icon: const Icon(Icons.watch),
+              label: const Text('Test watch alarm'),
+            ),
+            OutlinedButton.icon(
+              onPressed: controller.stopWatchAlarm,
+              icon: const Icon(Icons.stop_circle_outlined),
+              label: const Text('Stop watch alarm'),
+            ),
+          ],
+        ),
         const SizedBox(height: 20),
         if (controller.settings.simulationMode) ...[
           Text('Simulation controls',

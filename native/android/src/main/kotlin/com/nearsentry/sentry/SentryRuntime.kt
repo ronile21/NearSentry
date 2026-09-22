@@ -18,6 +18,7 @@ class SentryRuntime private constructor(
     private val engine = NativeProtectionEngine()
     private val handler = Handler(Looper.getMainLooper())
     private val garminMonitor = GarminAnchorMonitor(context)
+    private val watchMessenger = GarminWatchMessenger(context)
     private val eventSink = AtomicReference<((Map<String, Any?>) -> Unit)?>(null)
 
     @Volatile
@@ -25,6 +26,8 @@ class SentryRuntime private constructor(
     private var runtimeGeneration = repository.runtimeGeneration()
     private var lastAnchorStatus = "unknown"
     private var lastMessage = "Protection is off"
+    private var lastWatchAppStatus = "not_checked"
+    private var lastWatchCommand = "none"
     private var graceRunnable: Runnable? = null
     private var countdownRunnable: Runnable? = null
 
@@ -71,6 +74,13 @@ class SentryRuntime private constructor(
         val simulationChanged = current.simulationMode != updated.simulationMode
         repository.saveSettings(updated)
         engine.setGraceMs(updated.graceSeconds * 1000L)
+        if (engine.state == NativeProtectionState.PROTECTED && !updated.simulationMode) {
+            sendWatchCommand(
+                command = "ARMED",
+                requestOpen = false,
+                reason = "settings_updated",
+            )
+        }
         if (simulationChanged && repository.armedIntended()) {
             degrade("monitor_mode_changed_rearm_required", "settings")
         }
@@ -272,6 +282,22 @@ class SentryRuntime private constructor(
 
     fun telemetry(): List<Map<String, Any?>> = repository.telemetry()
 
+    fun testWatchAlarm() {
+        sendWatchCommand(
+            command = "TEST_ALARM",
+            requestOpen = true,
+            reason = "manual_test",
+        )
+    }
+
+    fun stopWatchAlarm() {
+        sendWatchCommand(
+            command = "ALARM_STOP",
+            requestOpen = false,
+            reason = "manual_test_stop",
+        )
+    }
+
     fun snapshot(): Map<String, Any?> {
         val deadline = engine.graceDeadlineMs
         val remaining = deadline?.let {
@@ -284,6 +310,8 @@ class SentryRuntime private constructor(
             "anchorStatus" to lastAnchorStatus,
             "simulationMode" to repository.settings().simulationMode,
             "runtimeGeneration" to runtimeGeneration,
+            "watchAppStatus" to lastWatchAppStatus,
+            "watchLastCommand" to lastWatchCommand,
             "message" to lastMessage,
             "graceRemainingMs" to remaining,
             "prerequisites" to prerequisites.snapshot(),
@@ -427,7 +455,68 @@ class SentryRuntime private constructor(
                 }
             }
         }
+
+        if (result.current != result.previous) {
+            when (result.current) {
+                NativeProtectionState.PROTECTED ->
+                    sendWatchCommand(
+                        command = "ARMED",
+                        requestOpen = false,
+                        reason = result.reason,
+                    )
+
+                NativeProtectionState.ALARM ->
+                    sendWatchCommand(
+                        command = "ALARM",
+                        requestOpen = true,
+                        reason = result.reason,
+                    )
+
+                NativeProtectionState.DISARMED -> {
+                    val command =
+                        if (result.previous == NativeProtectionState.ALARM) {
+                            "ALARM_STOP"
+                        } else {
+                            "DISARMED"
+                        }
+                    sendWatchCommand(
+                        command = command,
+                        requestOpen = false,
+                        reason = result.reason,
+                    )
+                }
+
+                else -> Unit
+            }
+        }
+
         publishSnapshot()
+    }
+
+    private fun sendWatchCommand(
+        command: String,
+        requestOpen: Boolean,
+        reason: String,
+    ) {
+        lastWatchCommand = command
+
+        if (repository.settings().simulationMode) {
+            lastWatchAppStatus = "watch:simulation_skipped"
+            return
+        }
+
+        watchMessenger.send(
+            anchorId = repository.anchorId(),
+            command = command,
+            graceMs = repository.settings().graceSeconds * 1000,
+            reason = reason,
+            requestOpen = requestOpen,
+        ) { status ->
+            handler.post {
+                lastWatchAppStatus = status
+                publishSnapshot()
+            }
+        }
     }
 
     private fun scheduleGraceDeadline() {
