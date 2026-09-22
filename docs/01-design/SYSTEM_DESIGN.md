@@ -46,13 +46,34 @@ Because the enforcement runtime must survive Flutter UI lifecycle loss, it conta
 
 `GarminAnchorMonitor` uses Garmin's Connect IQ Companion App SDK and normalizes device status to present / absent / unknown. Garmin-specific behavior never enters the product domain.
 
+### Garmin watch companion
+
+`watch/garmin/` is a Connect IQ watch application targeting `fenix7x`.
+
+Android sends a small versioned command protocol through `GarminWatchMessenger`:
+- `ARMED`
+- `DISARMED`
+- `ALARM`
+- `ALARM_STOP`
+- `TEST_ALARM`
+
+The ARMED command includes the configured grace interval. While the NearSentry watch app is foreground, it independently observes `System.getDeviceSettings().phoneConnected` every second and starts its own vibration/tone alarm after the grace interval.
+
+The Connect IQ background service registers for phone-app messages and a five-minute temporal fallback while armed. If a background check observes the phone disconnected it marks an alarm pending and requests an application wake.
+
+Garmin runtime constraint: `Toybox.Attention` is not available in background context, and Connect IQ has no immediate background callback specifically for phone disconnection. Therefore NearSentry cannot truthfully guarantee an immediate custom watch vibration while the app is not active. ADR-0006 records this boundary.
+
 ### Platform bridge
 
 Flutter uses a MethodChannel for commands/snapshots and an EventChannel for state/telemetry notifications.
 
 ## Data flow
 
-`Garmin/Simulator observation -> Native protection engine -> effects -> telemetry -> Flutter snapshot`
+`Garmin/Simulator observation -> Native protection engine -> phone effects -> telemetry -> Flutter snapshot`
+
+`Native protection state -> GarminWatchMessenger -> Connect IQ watch app -> watch state/alarm when reachable`
+
+The watch also performs an independent foreground `phoneConnected` check because the phone cannot send an ALARM message after the Bluetooth link has already been lost.
 
 ## Failure model
 

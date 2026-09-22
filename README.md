@@ -22,7 +22,8 @@ NearSentry is an Android-first anti-loss / anti-theft application that monitors 
 
 - `app/` — Flutter Material 3 application and Android host.
 - `packages/domain/` — pure Dart deterministic domain/reference state machine.
-- `native/android/` — Kotlin foreground runtime, Garmin adapter, persistence, alarm and native state engine.
+- `native/android/` — Kotlin foreground runtime, Garmin adapter, persistence, alarm, native state engine, and Android-to-watch command bridge.
+- `watch/garmin/` — Connect IQ Fenix 7X companion app, foreground separation alarm, background phone-message service, and Garmin build resources.
 - `docs/` — product, design, specifications, ADRs, testing, operations, and permanent version history.
 - `.agents/` — repository-native autonomous engineering contracts.
 - `scripts/` — verification/bootstrap utilities.
@@ -33,10 +34,22 @@ Settings → Developer simulation mode exposes deterministic connected/disconnec
 
 ## Build
 
-See `docs/06-operations/DEVELOPER_GUIDE.md` and `docs/06-operations/BUILD_AND_RUN.md`.
+Android:
+
+```bat
+ANDROID_BUILD_INSTALL.BAT
+```
+
+Garmin Fenix 7X:
+
+```bat
+GARMIN_BUILD_WATCH.BAT
+```
+
+See `docs/06-operations/DEVELOPER_GUIDE.md`, `docs/06-operations/BUILD_AND_RUN.md`, and `docs/06-operations/GARMIN_WATCH_SETUP.md`.
 
 ## Important validation boundary
 
-Garmin source integration uses the official Connect IQ Companion App SDK. Real-watch behavior, Samsung/Pixel background survival, battery impact, and Android full-screen alarm behavior require physical-device validation before any production reliability claim.
+Garmin source integration uses the official Connect IQ Companion App SDK plus a Fenix 7X Connect IQ watch app. Garmin does not permit Connect IQ `Attention` vibration/tone APIs from a background process and does not expose an immediate background phone-disconnect trigger. Immediate NearSentry-controlled watch vibration therefore requires the watch app to be active; the background service provides message handling and Garmin's minimum five-minute disconnect fallback/wake request. Real-watch behavior, OEM background survival, battery impact, and alarm behavior require physical-device validation before production reliability claims.
 
 No open-source license is granted unless a LICENSE file is explicitly added.
