@@ -22,6 +22,7 @@ All notable NearSentry product releases are recorded here.
 - `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
 
 ### Fixed
+- Silent phone alarm path: alarm playback now uses MediaPlayer with USAGE_ALARM, requests transient exclusive audio focus, temporarily raises STREAM_ALARM to maximum, loops playback, restores the previous alarm volume on dismissal, and logs audio diagnostics.
 - Android resource linking failure caused by invalid alarm-theme lock-screen style attributes; lock-screen/screen-on behavior remains implemented through the Activity API and manifest.
 - Dart 3.10 compile failure caused by a non-constant `Duration.isNegative` assertion in the const protection policy.
 - Deprecated Flutter radio selection API in trusted-device setup.
