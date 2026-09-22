@@ -2,6 +2,19 @@
 
 All notable NearSentry changes are recorded here.
 
+## [0.0.0.2] - 2026-09-22
+
+### Added
+- Repository-wide `AGENTS.md` operating contract.
+- Scoped agent instructions for Flutter, domain, Android native, and documentation.
+- Hidden `.agents/` infrastructure with eleven specialized engineering agents.
+- Shared context and engineering guardrails.
+- Reusable feature, feasibility-spike, and incident-debug workflows.
+- Agent task, review, and handoff templates.
+
+### Changed
+- Repository version advanced to `0.0.0.2`.
+
 ## [0.0.0.1] - 2026-09-22
 
 ### Added
