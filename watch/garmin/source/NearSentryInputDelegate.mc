@@ -1,3 +1,4 @@
+using Toybox.Lang as Lang;
 using Toybox.WatchUi as WatchUi;
 
 class NearSentryInputDelegate extends WatchUi.BehaviorDelegate {
@@ -8,12 +9,12 @@ class NearSentryInputDelegate extends WatchUi.BehaviorDelegate {
         _controller = controller;
     }
 
-    function onSelect() as Boolean {
+    function onSelect() as Lang.Boolean {
         _controller.toggleProtection();
         return true;
     }
 
-    function onNextPage() as Boolean {
+    function onNextPage() as Lang.Boolean {
         if (_controller.isAlarmActive()) {
             _controller.toggleAlarmMute();
             return true;
