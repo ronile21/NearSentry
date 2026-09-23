@@ -2,7 +2,7 @@
 
 All notable NearSentry product releases are recorded here.
 
-## [0.0.0.1] - 2026-09-22
+## [0.0.0.1] - 2026-09-23
 
 ### Added
 - Fenix 7X physical controls: START/STOP toggles protection and DOWN toggles persistent watch-local MUTE/UNMUTE during ALARM without disarming or dismissing Android.
@@ -27,6 +27,7 @@ All notable NearSentry product releases are recorded here.
 - `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
 
 ### Fixed
+- Real separation alarms now auto-recover when the trusted phone reconnects: watch and Android alarm effects stop and monitoring returns to ARMED/PROTECTED without disarming.
 - Garmin anchor monitoring now unregisters only device-status callbacks on stop and preserves the independent application-message listener used by Fenix controls.
 - Garmin Android watch messaging now owns explicit Connect IQ SDK initialization/readiness, queues the most recent command until `onSdkReady()`, and exposes transport-stage diagnostics for SDK, device, app and send operations.
 - Garmin watch app now registers foreground phone messaging during both `onStart()` and `getInitialView()`, and resets persisted Last-command diagnostics to `BOOT-1` on each foreground startup so stale messages cannot be mistaken for live transport.
@@ -38,7 +39,20 @@ All notable NearSentry product releases are recorded here.
 - Deprecated Flutter radio selection API in trusted-device setup.
 - Android full-clean installer no longer requires a globally installed Gradle distribution and now validates the active version branch and direct ADB authorization.
 
-### Validation note
-This implementation execution environment did not provide Flutter/Dart/Android SDK or Garmin hardware. Physical-device and build validation are therefore explicitly unverified here.
+### Validation
 
-GitHub Actions is disabled and was not used as validation.
+Physically verified during development on Samsung Android + Garmin Fenix 7X:
+- Android build/install
+- Garmin build/install prior to the final recovery patch
+- live Android-to-watch messaging
+- watch START/STOP arming
+- foreground disconnect escalation
+- watch vibration and audible alarm
+
+Final release-candidate rebuild and reconnect-recovery verification are required after the last recovery patch.
+
+### Known limitations
+- short-grace custom watch disconnect detection is foreground-only because Connect IQ does not provide a continuous one-second background daemon
+- background watch protection uses event-driven messages plus a five-minute temporal watchdog
+- OEM/background/battery/full-screen behavior is not exhaustively validated across Android devices
+
