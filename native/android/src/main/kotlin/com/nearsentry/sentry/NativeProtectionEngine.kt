@@ -142,8 +142,10 @@ class NativeProtectionEngine(
                     next = NativeProtectionState.DISARMED
                     reason = "alarm_authenticated_dismissal"
                 }
-                NativeEventType.ANCHOR_PRESENT ->
-                    reason = "recovery_does_not_cancel_alarm"
+                NativeEventType.ANCHOR_PRESENT -> {
+                    next = NativeProtectionState.PROTECTED
+                    reason = "anchor_recovered_after_alarm"
+                }
                 else -> accepted = false
             }
 

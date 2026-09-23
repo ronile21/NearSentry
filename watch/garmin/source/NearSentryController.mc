@@ -11,6 +11,7 @@ class NearSentryController {
     var _alarmActive;
     var _alarmMuted;
     var _alarmPulseIndex;
+    var _alarmAutoRecoverOnConnection;
 
     function initialize(view) {
         _view = view;
@@ -20,6 +21,7 @@ class NearSentryController {
         _alarmActive = false;
         _alarmMuted = false;
         _alarmPulseIndex = 0;
+        _alarmAutoRecoverOnConnection = false;
 
         _connectionTimer.start(method(:pollConnection), 1000, true);
         restoreState();
@@ -39,7 +41,12 @@ class NearSentryController {
         _view.setLastCommand(NearSentryState.getLastCommand());
 
         if (NearSentryState.isAlarmPending()) {
-            startAlarm(NearSentryState.getLastReason(), false);
+            startAlarm(
+                NearSentryState.getLastReason(),
+                false,
+                NearSentryState.getLastReason() == "foreground_phone_disconnected" ||
+                    NearSentryState.getLastReason() == "background_phone_disconnected"
+            );
         } else if (NearSentryState.isArmed() && !connected) {
             _disconnectedAt = System.getTimer();
             stopAlarm(false);
@@ -162,7 +169,11 @@ class NearSentryController {
             NearSentryState.setLastReason(
                 reason.length() > 0 ? reason : "phone_alarm"
             );
-            startAlarm(NearSentryState.getLastReason(), true);
+            startAlarm(
+                NearSentryState.getLastReason(),
+                true,
+                command == "ALARM"
+            );
         }
 
         WatchUi.requestUpdate();
@@ -171,7 +182,15 @@ class NearSentryController {
     function onPhoneConnectedChanged(connected) as Void {
         _view.setPhoneConnected(connected);
 
-        if (!NearSentryState.isArmed() || _alarmActive) {
+        if (!NearSentryState.isArmed()) {
+            WatchUi.requestUpdate();
+            return;
+        }
+
+        if (_alarmActive) {
+            if (connected && _alarmAutoRecoverOnConnection) {
+                recoverAfterReconnect();
+            }
             WatchUi.requestUpdate();
             return;
         }
@@ -188,8 +207,16 @@ class NearSentryController {
         var connected = System.getDeviceSettings().phoneConnected;
         _view.setPhoneConnected(connected);
 
-        if (!NearSentryState.isArmed() || _alarmActive) {
-            if (!NearSentryState.isArmed()) { _disconnectedAt = null; }
+        if (!NearSentryState.isArmed()) {
+            _disconnectedAt = null;
+            WatchUi.requestUpdate();
+            return;
+        }
+
+        if (_alarmActive) {
+            if (connected && _alarmAutoRecoverOnConnection) {
+                recoverAfterReconnect();
+            }
             WatchUi.requestUpdate();
             return;
         }
@@ -211,14 +238,15 @@ class NearSentryController {
             NearSentryState.setAlarmPending(true);
             NearSentryState.setAlarmMuted(false);
             NearSentryState.setLastReason("foreground_phone_disconnected");
-            startAlarm("foreground_phone_disconnected", true);
+            startAlarm("foreground_phone_disconnected", true, true);
         }
 
         WatchUi.requestUpdate();
     }
 
-    function startAlarm(reason, resetMute) as Void {
+    function startAlarm(reason, resetMute, autoRecoverOnConnection) as Void {
         if (resetMute) { NearSentryState.setAlarmMuted(false); }
+        _alarmAutoRecoverOnConnection = autoRecoverOnConnection == true;
         _alarmMuted = NearSentryState.isAlarmMuted();
 
         if (_alarmActive) {
@@ -244,12 +272,27 @@ class NearSentryController {
 
         _alarmActive = false;
         _alarmMuted = false;
+        _alarmAutoRecoverOnConnection = false;
         NearSentryState.setAlarmMuted(false);
 
         if (clearPending) { NearSentryState.setAlarmPending(false); }
 
         _view.setAlarm(false, "");
         _view.setAlarmMuted(false);
+        WatchUi.requestUpdate();
+    }
+
+    function recoverAfterReconnect() as Void {
+        NearSentryState.setAlarmPending(false);
+        NearSentryState.setAlarmMuted(false);
+        NearSentryState.setLastReason("phone_reconnected");
+        NearSentryState.setLastCommand("RECOVERED");
+
+        _disconnectedAt = null;
+        _view.setArmed(true);
+        _view.setLastCommand("RECOVERED");
+        stopAlarm(true);
+        NearSentryBackgroundPolicy.sync(true);
         WatchUi.requestUpdate();
     }
 

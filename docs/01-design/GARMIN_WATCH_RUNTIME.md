@@ -117,3 +117,21 @@ If the Android process has been fully killed, watch-to-phone CONTROL remains bes
 - Five-button interaction model: https://developer.garmin.com/connect-iq/user-experience-guidelines/designing-workflows-and-interactions/
 - Background: https://developer.garmin.com/connect-iq/api-docs/Toybox/Background.html
 - Attention: https://developer.garmin.com/connect-iq/api-docs/Toybox/Attention.html
+
+
+## Automatic recovery after reconnect
+
+A real separation alarm is recoverable.
+
+When the watch foreground detector has entered ALARM because `phoneConnected` stayed false beyond grace, a later transition back to connected:
+
+1. stops the watch alarm timer
+2. stops further vibration/tone pulses
+3. clears `alarmPending` and MUTE
+4. keeps `armed=true`
+5. returns the UI to ARMED
+6. records `Last: RECOVERED`
+
+Android follows the same policy: ALARM + trusted anchor present -> PROTECTED. The phone alarm controller is stopped by the normal state transition effects.
+
+This behavior is intentionally not applied to `TEST_ALARM`, so a diagnostic alarm does not disappear just because the devices were already connected.

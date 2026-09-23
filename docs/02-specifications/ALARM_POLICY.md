@@ -17,11 +17,13 @@ On transition to ALARM:
 - start repeating vibration waveform
 - keep alarm effects idempotent
 
-## Dismissal
+## Recovery and dismissal
 
-- production: BIOMETRIC_STRONG or DEVICE_CREDENTIAL through Android BiometricPrompt
+- real trusted-anchor recovery after a separation alarm stops alarm sound/vibration and returns the runtime to PROTECTED
+- recovery does not DISARM protection; monitoring continues
+- manual dismissal remains available through BIOMETRIC_STRONG or DEVICE_CREDENTIAL on Android
 - developer simulation does not introduce an unsecured production dismissal path
-- anchor recovery after escalation does not dismiss alarm
+- TEST_ALARM is diagnostic and is not auto-cleared merely because the phone is connected
 
 ## Platform limitation
 

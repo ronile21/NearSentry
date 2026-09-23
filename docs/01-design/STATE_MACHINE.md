@@ -18,7 +18,7 @@
 - GRACE + anchor present -> PROTECTED
 - GRACE + grace deadline reached -> ALARM
 - ALARM + authenticated dismissal -> DISARMED
-- ALARM + anchor recovery -> ALARM
+- ALARM + anchor recovery -> PROTECTED
 - any armed monitoring state + runtime failure -> DEGRADED
 - DEGRADED + runtime recovery -> ARMING, then anchor must be revalidated
 - any non-disarmed state + explicit disarm -> DISARMED
@@ -33,7 +33,7 @@ Wall-clock changes do not extend or shorten an active grace period.
 
 ## Duplicate events
 
-Repeated absent observations while already in GRACE do not extend the original deadline. Repeated ALARM effects are idempotent.
+Repeated absent observations while already in GRACE do not extend the original deadline. Repeated ALARM effects are idempotent. A real anchor recovery after ALARM stops alarm effects and returns protection to PROTECTED; it does not disarm the system.
 
 ## Process recovery
 
