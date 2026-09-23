@@ -532,8 +532,10 @@ class SentryRuntime private constructor(
             return
         }
 
+        val resolvedAnchorId = resolveGarminAnchorIdForMessaging()
+
         watchMessenger.send(
-            anchorId = repository.anchorId(),
+            anchorId = resolvedAnchorId,
             command = command,
             graceMs = repository.settings().graceSeconds * 1000,
             reason = reason,
@@ -544,6 +546,34 @@ class SentryRuntime private constructor(
                 publishSnapshot()
             }
         }
+    }
+
+    private fun resolveGarminAnchorIdForMessaging(): String? {
+        val storedId = repository.anchorId() ?: return null
+        val storedName = repository.anchorName()
+        val available = garminMonitor.availableAnchors()
+
+        if (available.any { it.id == storedId }) {
+            return storedId
+        }
+
+        val connectedSameName = available.filter {
+            it.status == AnchorStatus.PRESENT &&
+                !storedName.isNullOrBlank() &&
+                it.name == storedName
+        }
+
+        if (connectedSameName.size == 1) {
+            val replacement = connectedSameName.single()
+            repository.saveAnchor(replacement.id, replacement.name)
+            lastMessage =
+                "Trusted Garmin identity refreshed after device re-pair"
+            lastWatchAppStatus = "watch:anchor_identity_refreshed"
+            publishSnapshot()
+            return replacement.id
+        }
+
+        return storedId
     }
 
     private fun scheduleGraceDeadline() {

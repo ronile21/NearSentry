@@ -24,6 +24,7 @@ All notable NearSentry product releases are recorded here.
 - `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
 
 ### Fixed
+- Added self-repair for the trusted Garmin anchor after watch reset/re-pair: when the stored device identifier is stale but exactly one connected Garmin with the same enrolled name is present, NearSentry refreshes the stored identifier before watch messaging.
 - Added bidirectional Garmin watch handshake and diagnostics: PING/ACK, foreground/background command acknowledgements, Android app-event registration, and visible last-ACK state.
 - Silent phone alarm path: alarm playback now uses MediaPlayer with USAGE_ALARM, requests transient exclusive audio focus, temporarily raises STREAM_ALARM to maximum, loops playback, restores the previous alarm volume on dismissal, and logs audio diagnostics.
 - Android resource linking failure caused by invalid alarm-theme lock-screen style attributes; lock-screen/screen-on behavior remains implemented through the Activity API and manifest.
