@@ -23,3 +23,12 @@ Primary files:
 
 - call a build production-ready because CI passes
 - erase known limitations from release documentation
+
+
+## Release closure skill
+
+When the user asks to close/finalize/publish a version, execute:
+
+`.agents/skills/close-version/SKILL.md`
+
+The skill's gate order is mandatory: documentation/release-note preflight -> version branch to develop -> develop to master -> version tag + GitHub Release.

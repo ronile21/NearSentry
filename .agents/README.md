@@ -27,3 +27,10 @@ The `.agents/` tree defines reusable engineering roles, workflows, shared contex
 This directory contains durable agent instructions, not transient chain-of-thought, hidden reasoning, or scratchpads.
 
 Do not commit private reasoning. Commit only useful engineering context, decisions, evidence, and concise handoffs.
+
+
+## Skills
+
+Reusable operational skills live under `.agents/skills/`.
+
+- `skills/close-version/SKILL.md` — authoritative version-closing workflow: documentation/release-note gate, version -> develop, develop -> master, then Git tag and GitHub Release.
