@@ -20,8 +20,15 @@ class GarminWatchMessenger(
     @Volatile
     private var inboundListener: ((Map<String, Any?>) -> Unit)? = null
 
+    @Volatile
+    private var traceListener: ((String) -> Unit)? = null
+
     fun setInboundListener(listener: ((Map<String, Any?>) -> Unit)?) {
         inboundListener = listener
+    }
+
+    fun setTraceListener(listener: ((String) -> Unit)?) {
+        traceListener = listener
     }
 
     fun send(
@@ -32,45 +39,63 @@ class GarminWatchMessenger(
         requestOpen: Boolean,
         callback: (String) -> Unit,
     ) {
+        trace("start:$command:anchor=${anchorId ?: "null"}")
+
         if (anchorId.isNullOrBlank()) {
+            trace("no_anchor")
             callback("watch:no_anchor")
             return
         }
 
-        val device = try {
-            (connectIQ.knownDevices ?: emptyList()).firstOrNull {
-                it.deviceIdentifier.toString() == anchorId
-            }
+        val knownDevices = try {
+            connectIQ.knownDevices ?: emptyList()
         } catch (_: InvalidStateException) {
+            trace("sdk_not_ready")
             callback("watch:sdk_not_ready")
             return
         } catch (_: ServiceUnavailableException) {
+            trace("garmin_connect_unavailable")
             callback("watch:garmin_connect_unavailable")
             return
         }
 
+        val knownSummary = knownDevices.joinToString("|") {
+            "${it.friendlyName}:${it.deviceIdentifier}"
+        }.ifBlank { "none" }
+
+        val device = knownDevices.firstOrNull {
+            it.deviceIdentifier.toString() == anchorId
+        }
+
         if (device == null) {
+            trace("device_not_exposed:stored=$anchorId:known=$knownSummary")
             callback("watch:device_not_exposed")
             return
         }
 
         val status = try {
             connectIQ.getDeviceStatus(device)
-        } catch (_: Exception) {
+        } catch (error: Exception) {
+            trace("device_status_exception:${error.javaClass.simpleName}")
             IQDevice.IQDeviceStatus.UNKNOWN
         }
 
+        trace("device:${device.friendlyName}:${device.deviceIdentifier}:${status.name.lowercase()}")
+
         if (status != IQDevice.IQDeviceStatus.CONNECTED) {
+            trace("device_not_connected:${status.name.lowercase()}")
             callback("watch:device_${status.name.lowercase()}")
             return
         }
 
         try {
+            trace("app_probe:$WATCH_APP_ID")
             connectIQ.getApplicationInfo(
                 WATCH_APP_ID,
                 device,
                 object : ConnectIQ.IQApplicationInfoListener {
                     override fun onApplicationInfoReceived(app: IQApp) {
+                        trace("app_found")
                         registerInbound(device, app)
                         sendInstalled(
                             device = device,
@@ -84,16 +109,20 @@ class GarminWatchMessenger(
                     }
 
                     override fun onApplicationNotInstalled(applicationId: String) {
+                        trace("app_not_installed:$applicationId")
                         callback("watch:not_installed")
                     }
                 },
             )
         } catch (_: InvalidStateException) {
+            trace("app_probe_sdk_not_ready")
             callback("watch:sdk_not_ready")
         } catch (_: ServiceUnavailableException) {
+            trace("app_probe_garmin_connect_unavailable")
             callback("watch:garmin_connect_unavailable")
         } catch (error: Exception) {
             Log.e(TAG, "Unable to inspect NearSentry watch app", error)
+            trace("app_probe_failed:${error.javaClass.simpleName}")
             callback("watch:probe_failed:${error.javaClass.simpleName}")
         }
     }
@@ -106,6 +135,7 @@ class GarminWatchMessenger(
 
         try {
             connectIQ.registerForAppEvents(device, app) { _, _, message, status ->
+                trace("inbound:${status.name.lowercase()}:count=${message.size}")
                 Log.i(TAG, "Inbound app event status=${status.name} message=$message")
                 if (message.isEmpty()) {
                     inboundListener?.invoke(
@@ -135,8 +165,10 @@ class GarminWatchMessenger(
                     )
                 }
             }
+            trace("inbound_registered")
         } catch (error: Exception) {
             Log.e(TAG, "Unable to register for NearSentry watch app events", error)
+            trace("inbound_register_failed:${error.javaClass.simpleName}")
         }
     }
 
@@ -157,8 +189,10 @@ class GarminWatchMessenger(
         )
 
         try {
+            trace("send_dispatch:$command")
             connectIQ.sendMessage(device, app, payload) { _, _, status ->
                 val result = "watch:message_${status.name.lowercase()}"
+                trace("send_result:$command:${status.name.lowercase()}")
                 Log.i(TAG, "$command -> $result")
                 callback(result)
 
@@ -167,11 +201,14 @@ class GarminWatchMessenger(
                 }
             }
         } catch (_: InvalidStateException) {
+            trace("send_sdk_not_ready:$command")
             callback("watch:sdk_not_ready")
         } catch (_: ServiceUnavailableException) {
+            trace("send_garmin_connect_unavailable:$command")
             callback("watch:garmin_connect_unavailable")
         } catch (error: Exception) {
             Log.e(TAG, "Unable to send $command to NearSentry watch app", error)
+            trace("send_failed:$command:${error.javaClass.simpleName}")
             callback("watch:send_failed:${error.javaClass.simpleName}")
         }
     }
@@ -184,6 +221,11 @@ class GarminWatchMessenger(
         } catch (error: Exception) {
             Log.w(TAG, "Unable to request NearSentry watch app open", error)
         }
+    }
+
+    private fun trace(value: String) {
+        Log.i(TAG, value)
+        traceListener?.invoke(value)
     }
 
     companion object {
