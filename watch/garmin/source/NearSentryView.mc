@@ -8,9 +8,6 @@ class NearSentryView extends WatchUi.View {
     var _phoneConnected;
     var _reason;
     var _lastCommand;
-    var _serviceEnabled;
-    var _tonesOn;
-    var _vibrateOn;
 
     function initialize() {
         WatchUi.View.initialize();
@@ -19,9 +16,6 @@ class NearSentryView extends WatchUi.View {
         _phoneConnected = System.getDeviceSettings().phoneConnected;
         _reason = "";
         _lastCommand = "NONE";
-        _serviceEnabled = true;
-        _tonesOn = false;
-        _vibrateOn = false;
     }
 
     function setArmed(value) {
@@ -41,15 +35,6 @@ class NearSentryView extends WatchUi.View {
         _lastCommand = value == null ? "NONE" : value.toString();
     }
 
-    function setServiceEnabled(value) {
-        _serviceEnabled = value == true;
-    }
-
-    function setToneState(tonesOn, vibrateOn) {
-        _tonesOn = tonesOn == true;
-        _vibrateOn = vibrateOn == true;
-    }
-
     function onUpdate(dc) {
         var width = dc.getWidth();
         var height = dc.getHeight();
@@ -59,7 +44,7 @@ class NearSentryView extends WatchUi.View {
         dc.clear();
 
         var statusColor = Graphics.COLOR_WHITE;
-        var statusText = _serviceEnabled ? "DISARMED" : "DISABLED";
+        var statusText = "DISARMED";
 
         if (_alarm) {
             statusColor = Graphics.COLOR_RED;
@@ -115,15 +100,6 @@ class NearSentryView extends WatchUi.View {
         );
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(
-            cx,
-            height - 78,
-            Graphics.FONT_XTINY,
-            "Tone:" + (_tonesOn ? "ON" : "OFF") +
-                " Vib:" + (_vibrateOn ? "ON" : "OFF"),
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-
         dc.drawText(
             cx,
             height - 54,

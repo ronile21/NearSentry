@@ -54,7 +54,6 @@ class SentryRuntime private constructor(
             "graceSeconds" to value.graceSeconds,
             "soundEnabled" to value.soundEnabled,
             "vibrationEnabled" to value.vibrationEnabled,
-            "watchServiceEnabled" to value.watchServiceEnabled,
             "telemetryRetention" to value.telemetryRetention,
             "simulationMode" to value.simulationMode,
         )
@@ -70,8 +69,6 @@ class SentryRuntime private constructor(
             soundEnabled = values["soundEnabled"] as? Boolean ?: current.soundEnabled,
             vibrationEnabled =
                 values["vibrationEnabled"] as? Boolean ?: current.vibrationEnabled,
-            watchServiceEnabled =
-                values["watchServiceEnabled"] as? Boolean ?: current.watchServiceEnabled,
             telemetryRetention =
                 (values["telemetryRetention"] as? Number)?.toInt()
                     ?: current.telemetryRetention,
@@ -79,42 +76,9 @@ class SentryRuntime private constructor(
                 values["simulationMode"] as? Boolean ?: current.simulationMode,
         )
         val simulationChanged = current.simulationMode != updated.simulationMode
-        val watchServiceChanged =
-            current.watchServiceEnabled != updated.watchServiceEnabled
         repository.saveSettings(updated)
         engine.setGraceMs(updated.graceSeconds * 1000L)
-
-        if (watchServiceChanged && !updated.simulationMode) {
-            sendWatchCommand(
-                command =
-                    if (updated.watchServiceEnabled) {
-                        "SERVICE_ENABLE"
-                    } else {
-                        "SERVICE_DISABLE"
-                    },
-                requestOpen = false,
-                reason = "watch_service_setting_changed",
-            )
-            if (updated.watchServiceEnabled &&
-                engine.state == NativeProtectionState.PROTECTED
-            ) {
-                handler.postDelayed(
-                    {
-                        sendWatchCommand(
-                            command = "ARMED",
-                            requestOpen = false,
-                            reason = "watch_service_reenabled",
-                        )
-                    },
-                    500,
-                )
-            }
-        }
-
-        if (engine.state == NativeProtectionState.PROTECTED &&
-            !updated.simulationMode &&
-            updated.watchServiceEnabled
-        ) {
+        if (engine.state == NativeProtectionState.PROTECTED && !updated.simulationMode) {
             sendWatchCommand(
                 command = "ARMED",
                 requestOpen = false,
@@ -548,15 +512,7 @@ class SentryRuntime private constructor(
             val command = payload["command"]?.toString() ?: "unknown"
             val status = payload["status"]?.toString() ?: "unknown"
             val armed = payload["armed"]?.toString() ?: "unknown"
-            val serviceEnabled =
-                payload["serviceEnabled"]?.toString() ?: "unknown"
-            val tonesOn = payload["tonesOn"]?.toString() ?: "unknown"
-            val vibrateOn = payload["vibrateOn"]?.toString() ?: "unknown"
-            val phoneConnected =
-                payload["phoneConnected"]?.toString() ?: "unknown"
-            lastWatchAck =
-                "$command / $status / armed=$armed / service=$serviceEnabled / " +
-                    "tones=$tonesOn / vibrate=$vibrateOn / phone=$phoneConnected"
+            lastWatchAck = "$command / $status / armed=$armed"
             lastWatchAppStatus = "watch:ack_received"
         } else {
             lastWatchAck = payload.toString()

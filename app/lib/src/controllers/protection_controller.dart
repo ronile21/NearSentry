@@ -62,7 +62,6 @@ class ProtectionController extends ChangeNotifier {
       graceSeconds: settings.graceSeconds,
       soundEnabled: settings.soundEnabled,
       vibrationEnabled: settings.vibrationEnabled,
-      watchServiceEnabled: settings.watchServiceEnabled,
       telemetryRetention: settings.telemetryRetention,
       simulationMode: settings.simulationMode,
     );

@@ -5,8 +5,6 @@ All notable NearSentry product releases are recorded here.
 ## [0.0.0.1] - 2026-09-22
 
 ### Added
-- Persistent Garmin watch service enablement state (default enabled) with explicit phone-side toggle, background message registration, and service enable/disable protocol.
-- Garmin watch ACK diagnostics now report tones, vibration, phone connectivity, and service-enabled state.
 - Fenix 7X Connect IQ companion app with synchronized armed state, foreground phone-disconnect detection, watch vibration/tone alarm, background phone-message handling, five-minute Garmin background fallback, diagnostics and build tooling.
 - Android-to-watch command bridge using the official Garmin Connect IQ Mobile SDK and the shared NearSentry watch application ID.
 - First end-to-end NearSentry MVP.
@@ -26,7 +24,6 @@ All notable NearSentry product releases are recorded here.
 - `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
 
 ### Fixed
-- Watch alarm sound now uses a loud repeating Garmin ToneProfile with TONE_LOUD_BEEP fallback while continuing the strong vibration pattern.
 - Added bidirectional Garmin watch handshake and diagnostics: PING/ACK, foreground/background command acknowledgements, Android app-event registration, and visible last-ACK state.
 - Silent phone alarm path: alarm playback now uses MediaPlayer with USAGE_ALARM, requests transient exclusive audio focus, temporarily raises STREAM_ALARM to maximum, loops playback, restores the previous alarm volume on dismissal, and logs audio diagnostics.
 - Android resource linking failure caused by invalid alarm-theme lock-screen style attributes; lock-screen/screen-on behavior remains implemented through the Activity API and manifest.

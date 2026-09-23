@@ -17,7 +17,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   late int retention;
   late bool sound;
   late bool vibration;
-  late bool watchService;
   late bool simulation;
 
   @override
@@ -28,7 +27,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     retention = settings.telemetryRetention;
     sound = settings.soundEnabled;
     vibration = settings.vibrationEnabled;
-    watchService = settings.watchServiceEnabled;
     simulation = settings.simulationMode;
   }
 
@@ -39,7 +37,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         graceSeconds: grace.clamp(1, 15),
         soundEnabled: sound,
         vibrationEnabled: vibration,
-        watchServiceEnabled: watchService,
         telemetryRetention: retention.clamp(50, 1000),
         simulationMode: simulation,
       ),
@@ -78,17 +75,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           value: vibration,
           onChanged: (value) => setState(() => vibration = value),
           title: const Text('Alarm vibration'),
-        ),
-        SwitchListTile(
-          contentPadding: EdgeInsets.zero,
-          value: watchService,
-          onChanged: (value) => setState(() => watchService = value),
-          title: const Text('Garmin watch background service'),
-          subtitle: const Text(
-            'Keeps NearSentry registered for Garmin background events. '
-            'Garmin does not allow continuous 1-second polling while the '
-            'watch app is not in the foreground.',
-          ),
         ),
         const Divider(height: 32),
         Text('Diagnostics', style: Theme.of(context).textTheme.titleLarge),

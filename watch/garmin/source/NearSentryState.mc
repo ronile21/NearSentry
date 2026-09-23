@@ -8,23 +8,9 @@ module NearSentryState {
     const KEY_LAST_COMMAND = "lastCommand";
     const KEY_LAST_REASON = "lastReason";
     const KEY_GRACE_MS = "graceMs";
-    const KEY_SERVICE_ENABLED = "serviceEnabled";
 
     function isArmed() {
         return Storage.getValue(KEY_ARMED) == true;
-    }
-
-    function isServiceEnabled() {
-        var value = Storage.getValue(KEY_SERVICE_ENABLED);
-        return value == null ? true : value == true;
-    }
-
-    function setServiceEnabled(value) {
-        Storage.setValue(KEY_SERVICE_ENABLED, value == true);
-        if (value != true) {
-            setArmed(false);
-            setAlarmPending(false);
-        }
     }
 
     function setArmed(value) {
