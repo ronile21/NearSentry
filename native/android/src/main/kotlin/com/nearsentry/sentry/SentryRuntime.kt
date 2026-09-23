@@ -207,7 +207,12 @@ class SentryRuntime private constructor(
             return
         }
 
-        val id = repository.anchorId()
+        val id =
+            if (repository.settings().simulationMode) {
+                repository.anchorId()
+            } else {
+                resolveGarminAnchorIdForMessaging()
+            }
         if (repository.settings().simulationMode) {
             handleObservation(
                 AnchorObservation(
@@ -558,7 +563,7 @@ class SentryRuntime private constructor(
         }
 
         val connectedSameName = available.filter {
-            it.status == AnchorStatus.PRESENT &&
+            it.status == "present" &&
                 !storedName.isNullOrBlank() &&
                 it.name == storedName
         }
