@@ -298,6 +298,7 @@ class SentryRuntime private constructor(
             command = "PING",
             requestOpen = false,
             reason = "manual_ping",
+            allowInSimulation = true,
         )
     }
 
@@ -306,6 +307,7 @@ class SentryRuntime private constructor(
             command = "TEST_ALARM",
             requestOpen = true,
             reason = "manual_test",
+            allowInSimulation = true,
         )
     }
 
@@ -314,6 +316,7 @@ class SentryRuntime private constructor(
             command = "ALARM_STOP",
             requestOpen = false,
             reason = "manual_test_stop",
+            allowInSimulation = true,
         )
     }
 
@@ -532,11 +535,14 @@ class SentryRuntime private constructor(
         command: String,
         requestOpen: Boolean,
         reason: String,
+        allowInSimulation: Boolean = false,
     ) {
         lastWatchCommand = command
 
-        if (repository.settings().simulationMode) {
+        if (repository.settings().simulationMode && !allowInSimulation) {
             lastWatchAppStatus = "watch:simulation_skipped"
+            lastWatchTransportTrace = "simulation_skipped:$command"
+            publishSnapshot()
             return
         }
 
