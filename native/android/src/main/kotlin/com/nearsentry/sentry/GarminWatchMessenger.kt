@@ -31,6 +31,57 @@ class GarminWatchMessenger(
         traceListener = listener
     }
 
+    fun listen(
+        anchorId: String?,
+        callback: (String) -> Unit,
+    ) {
+        if (anchorId.isNullOrBlank()) {
+            callback("watch:listen_no_anchor")
+            return
+        }
+
+        val device = try {
+            (connectIQ.knownDevices ?: emptyList()).firstOrNull {
+                it.deviceIdentifier.toString() == anchorId
+            }
+        } catch (_: InvalidStateException) {
+            callback("watch:listen_sdk_not_ready")
+            return
+        } catch (_: ServiceUnavailableException) {
+            callback("watch:listen_garmin_connect_unavailable")
+            return
+        }
+
+        if (device == null) {
+            callback("watch:listen_device_not_exposed")
+            return
+        }
+
+        try {
+            connectIQ.getApplicationInfo(
+                WATCH_APP_ID,
+                device,
+                object : ConnectIQ.IQApplicationInfoListener {
+                    override fun onApplicationInfoReceived(app: IQApp) {
+                        registerInbound(device, app)
+                        callback("watch:listen_registered")
+                    }
+
+                    override fun onApplicationNotInstalled(applicationId: String) {
+                        callback("watch:listen_not_installed")
+                    }
+                },
+            )
+        } catch (_: InvalidStateException) {
+            callback("watch:listen_sdk_not_ready")
+        } catch (_: ServiceUnavailableException) {
+            callback("watch:listen_garmin_connect_unavailable")
+        } catch (error: Exception) {
+            Log.e(TAG, "Unable to register NearSentry watch listener", error)
+            callback("watch:listen_failed:${error.javaClass.simpleName}")
+        }
+    }
+
     fun send(
         anchorId: String?,
         command: String,

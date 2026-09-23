@@ -1,9 +1,6 @@
 using Toybox.Application as Application;
-using Toybox.Background as Background;
 using Toybox.Communications as Communications;
 using Toybox.System as System;
-using Toybox.Time as Time;
-using Toybox.WatchUi as WatchUi;
 
 (:background)
 class NearSentryWatchApp extends Application.AppBase {
@@ -19,32 +16,21 @@ class NearSentryWatchApp extends Application.AppBase {
     }
 
     function onStart(state) as Void {
-        // Register the foreground phone callback as early as possible.
-        // This is intentionally repeated in getInitialView() because Garmin
-        // may recreate the app UI independently of the previous foreground
-        // registration after reboot/update/sideload.
         registerForegroundMessages();
-        registerBackgroundEvents();
-
-        // Do not trust persisted Last: values as proof of a new message.
-        NearSentryState.setLastCommand("BOOT-1");
+        NearSentryBackgroundPolicy.sync(NearSentryState.isArmed());
+        NearSentryState.setLastCommand("BOOT-2");
     }
 
     function onStop(state) as Void {
-        if (_controller != null) {
-            _controller.shutdown();
-        }
-
+        if (_controller != null) { _controller.shutdown(); }
         try {
             Communications.registerForPhoneAppMessages(null);
-        } catch (error) {
-        }
+        } catch (error) {}
     }
 
     function getInitialView() {
         _view = new NearSentryView();
         _controller = new NearSentryController(_view);
-
         registerForegroundMessages();
 
         if (_pendingData != null) {
@@ -54,7 +40,7 @@ class NearSentryWatchApp extends Application.AppBase {
             _controller.restoreState();
         }
 
-        return [_view];
+        return [_view, new NearSentryInputDelegate(_controller)];
     }
 
     function getServiceDelegate() {
@@ -86,10 +72,7 @@ class NearSentryWatchApp extends Application.AppBase {
     }
 
     function onBackgroundData(data) as Void {
-        if (data == null) {
-            return;
-        }
-
+        if (data == null) { return; }
         if (_controller != null) {
             _controller.handlePhoneMessage(data);
         } else {
@@ -98,9 +81,7 @@ class NearSentryWatchApp extends Application.AppBase {
     }
 
     function onStorageChanged() as Void {
-        if (_controller != null) {
-            _controller.restoreState();
-        }
+        if (_controller != null) { _controller.restoreState(); }
     }
 
     function onDeviceSettingChanged(aSymbol, aValue) as Void {
@@ -110,22 +91,10 @@ class NearSentryWatchApp extends Application.AppBase {
     }
 
     function onAppInstall() as Void {
-        registerBackgroundEvents();
+        NearSentryBackgroundPolicy.sync(NearSentryState.isArmed());
     }
 
     function onAppUpdate() as Void {
-        registerBackgroundEvents();
-    }
-
-    function registerBackgroundEvents() as Void {
-        try {
-            Background.registerForPhoneAppMessageEvent();
-
-            if (NearSentryState.isArmed()) {
-                Background.registerForTemporalEvent(new Time.Duration(5 * 60));
-            }
-        } catch (error) {
-            System.println("NearSentry background registration failed: " + error);
-        }
+        NearSentryBackgroundPolicy.sync(NearSentryState.isArmed());
     }
 }

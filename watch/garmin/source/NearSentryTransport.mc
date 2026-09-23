@@ -52,6 +52,27 @@ module NearSentryTransport {
         };
     }
 
+    function controlPayload(action) {
+        return {
+            "type" => "CONTROL",
+            "protocol" => 1,
+            "action" => action,
+            "armed" => NearSentryState.isArmed()
+        };
+    }
+
+    function sendControl(action) as Void {
+        try {
+            Communications.transmit(
+                controlPayload(action),
+                {},
+                new NearSentryTransmitListener("CONTROL_" + action)
+            );
+        } catch (error) {
+            System.println("NearSentry CONTROL transmit failed: " + error);
+        }
+    }
+
     function sendAck(command, status) as Void {
         try {
             Communications.transmit(

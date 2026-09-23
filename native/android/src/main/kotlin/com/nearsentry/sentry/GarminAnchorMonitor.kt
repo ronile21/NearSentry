@@ -57,9 +57,14 @@ class GarminAnchorMonitor(
 
     override fun stop() {
         listener = null
-        try {
-            connectIQ.unregisterAllForEvents()
-        } catch (_: InvalidStateException) {
+
+        // Do not unregister application-message listeners owned by
+        // GarminWatchMessenger. Only remove this monitor's device callbacks.
+        devices.values.forEach { device ->
+            try {
+                connectIQ.unregisterForDeviceEvents(device)
+            } catch (_: Exception) {
+            }
         }
     }
 

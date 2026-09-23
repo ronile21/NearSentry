@@ -30,6 +30,7 @@ class SentryRuntime private constructor(
     private var lastWatchCommand = "none"
     private var lastWatchAck = "none"
     private var lastWatchTransportTrace = "none"
+    private var watchListenAttempt = 0
     private var graceRunnable: Runnable? = null
     private var countdownRunnable: Runnable? = null
 
@@ -48,6 +49,8 @@ class SentryRuntime private constructor(
         if (repository.armedIntended()) {
             lastMessage = "Protection runtime requires revalidation after process restart"
         }
+
+        scheduleWatchListenerRegistration(0)
     }
 
     fun setEventSink(sink: ((Map<String, Any?>) -> Unit)?) {
@@ -119,6 +122,8 @@ class SentryRuntime private constructor(
         val descriptor = availableAnchors().firstOrNull { it["id"] == id }
             ?: throw IllegalStateException("Selected anchor is not currently available")
         repository.saveAnchor(id, descriptor["name"].toString())
+        watchListenAttempt = 0
+        scheduleWatchListenerRegistration(0)
         lastMessage = "Trusted device configured"
         publishSnapshot()
     }
@@ -190,6 +195,8 @@ class SentryRuntime private constructor(
 
     fun onServiceStarted() {
         runtimeGeneration = repository.nextRuntimeGeneration()
+        watchListenAttempt = 0
+        scheduleWatchListenerRegistration(0)
         serviceHealthy = true
         if (repository.armedIntended() &&
             engine.state == NativeProtectionState.DEGRADED
@@ -518,17 +525,148 @@ class SentryRuntime private constructor(
     }
 
     private fun handleWatchInbound(payload: Map<String, Any?>) {
-        val type = payload["type"]?.toString()?.uppercase()
-        if (type == "ACK") {
-            val command = payload["command"]?.toString() ?: "unknown"
-            val status = payload["status"]?.toString() ?: "unknown"
-            val armed = payload["armed"]?.toString() ?: "unknown"
-            lastWatchAck = "$command / $status / armed=$armed"
-            lastWatchAppStatus = "watch:ack_received"
-        } else {
-            lastWatchAck = payload.toString()
+        when (payload["type"]?.toString()?.uppercase()) {
+            "ACK" -> {
+                val command = payload["command"]?.toString() ?: "unknown"
+                val status = payload["status"]?.toString() ?: "unknown"
+                val armed = payload["armed"]?.toString() ?: "unknown"
+                lastWatchAck = "$command / $status / armed=$armed"
+                lastWatchAppStatus = "watch:ack_received"
+            }
+
+            "CONTROL" -> handleWatchControl(payload)
+
+            else -> lastWatchAck = payload.toString()
         }
         publishSnapshot()
+    }
+
+    private fun handleWatchControl(payload: Map<String, Any?>) {
+        val action = payload["action"]?.toString()?.uppercase() ?: "UNKNOWN"
+        lastWatchAck = "CONTROL / $action"
+
+        when (action) {
+            "START" -> {
+                try {
+                    val currentSettings = repository.settings()
+                    if (currentSettings.simulationMode) {
+                        repository.saveSettings(
+                            currentSettings.copy(simulationMode = false),
+                        )
+                        engine.setGraceMs(repository.settings().graceSeconds * 1000L)
+                    }
+
+                    if (engine.state == NativeProtectionState.ALARM) {
+                        lastWatchAppStatus = "watch:control_start_rejected_alarm"
+                        lastMessage = "Watch START rejected while alarm is active"
+                        sendWatchCommand(
+                            command = "ALARM",
+                            requestOpen = true,
+                            reason = "watch_start_rejected_alarm",
+                            allowInSimulation = true,
+                        )
+                        return
+                    }
+
+                    if (!repository.armedIntended()) {
+                        arm()
+                    } else {
+                        ContextCompat.startForegroundService(
+                            context,
+                            Intent(context, SentryService::class.java),
+                        )
+                    }
+
+                    lastWatchAppStatus = "watch:control_start_received"
+                    lastMessage = "Protection started from Garmin watch"
+                } catch (error: Exception) {
+                    lastWatchAppStatus =
+                        "watch:control_start_rejected:${error.javaClass.simpleName}"
+                    lastMessage = error.message ?: "Watch START was rejected"
+                    sendWatchCommand(
+                        command = "DISARMED",
+                        requestOpen = false,
+                        reason = "watch_start_rejected",
+                        allowInSimulation = true,
+                    )
+                }
+            }
+
+            "STOP" -> {
+                if (engine.state == NativeProtectionState.ALARM) {
+                    lastWatchAppStatus = "watch:control_stop_requires_phone_auth"
+                    lastMessage = "Authenticate on Android to dismiss the active alarm"
+                    sendWatchCommand(
+                        command = "ALARM",
+                        requestOpen = true,
+                        reason = "watch_stop_rejected_alarm",
+                        allowInSimulation = true,
+                    )
+                    return
+                }
+
+                try {
+                    if (repository.armedIntended() ||
+                        engine.state != NativeProtectionState.DISARMED
+                    ) {
+                        disarm("watch_control")
+                    } else {
+                        sendWatchCommand(
+                            command = "DISARMED",
+                            requestOpen = false,
+                            reason = "watch_control_already_stopped",
+                            allowInSimulation = true,
+                        )
+                    }
+                    lastWatchAppStatus = "watch:control_stop_received"
+                    lastMessage = "Protection stopped from Garmin watch"
+                } catch (error: Exception) {
+                    lastWatchAppStatus =
+                        "watch:control_stop_rejected:${error.javaClass.simpleName}"
+                    lastMessage = error.message ?: "Watch STOP was rejected"
+                }
+            }
+
+            else -> {
+                lastWatchAppStatus = "watch:control_unknown"
+                lastMessage = "Unknown Garmin watch control action: $action"
+            }
+        }
+    }
+
+    private fun scheduleWatchListenerRegistration(delayMs: Long) {
+        handler.postDelayed(
+            {
+                val anchorId = repository.anchorId()
+                if (anchorId.isNullOrBlank()) {
+                    lastWatchTransportTrace = "listen:no_anchor"
+                    publishSnapshot()
+                    return@postDelayed
+                }
+
+                watchMessenger.listen(anchorId) { status ->
+                    handler.post {
+                        lastWatchTransportTrace = status
+
+                        if (status == "watch:listen_registered") {
+                            watchListenAttempt = 0
+                            publishSnapshot()
+                            return@post
+                        }
+
+                        if (watchListenAttempt < 4) {
+                            watchListenAttempt += 1
+                            scheduleWatchListenerRegistration(
+                                750L * watchListenAttempt,
+                            )
+                        }
+
+                        publishSnapshot()
+                    }
+                }
+            },
+            delayMs,
+        )
     }
 
     private fun sendWatchCommand(

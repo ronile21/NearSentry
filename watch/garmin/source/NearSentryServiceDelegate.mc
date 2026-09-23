@@ -1,8 +1,6 @@
-using Toybox.Application.Storage as Storage;
 using Toybox.Background as Background;
 using Toybox.Communications as Communications;
 using Toybox.System as System;
-using Toybox.Time as Time;
 
 (:background)
 class NearSentryServiceDelegate extends System.ServiceDelegate {
@@ -25,15 +23,18 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         if (command == "ARMED") {
             NearSentryState.setArmed(true);
             NearSentryState.setAlarmPending(false);
+            NearSentryState.setAlarmMuted(false);
             NearSentryState.setLastReason("phone_armed");
-            ensureTemporalMonitor();
+            NearSentryBackgroundPolicy.sync(true);
         } else if (command == "DISARMED" || command == "ALARM_STOP") {
             NearSentryState.setArmed(false);
             NearSentryState.setAlarmPending(false);
+            NearSentryState.setAlarmMuted(false);
             NearSentryState.setLastReason("phone_disarmed");
-            stopTemporalMonitor();
+            NearSentryBackgroundPolicy.sync(false);
         } else if (command == "ALARM" || command == "TEST_ALARM") {
             NearSentryState.setAlarmPending(true);
+            NearSentryState.setAlarmMuted(false);
             NearSentryState.setLastReason(
                 NearSentryState.reasonFrom(data).length() > 0
                     ? NearSentryState.reasonFrom(data)
@@ -43,15 +44,13 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         }
 
         NearSentryTransport.sendBackgroundAck(
-            command,
-            "background_received",
-            data
+            command, "background_received", data
         );
     }
 
     function onTemporalEvent() as Void {
         if (!NearSentryState.isArmed()) {
-            stopTemporalMonitor();
+            NearSentryBackgroundPolicy.sync(false);
             Background.exit(null);
             return;
         }
@@ -59,6 +58,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         var connected = System.getDeviceSettings().phoneConnected;
         if (!connected) {
             NearSentryState.setAlarmPending(true);
+            NearSentryState.setAlarmMuted(false);
             NearSentryState.setLastReason("background_phone_disconnected");
             requestWake("NearSentry: phone disconnected");
             Background.exit({
@@ -69,22 +69,6 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         }
 
         Background.exit(null);
-    }
-
-    function ensureTemporalMonitor() as Void {
-        try {
-            Background.registerForTemporalEvent(new Time.Duration(5 * 60));
-        } catch (error) {
-            System.println("NearSentry temporal monitor registration failed: " + error);
-        }
-    }
-
-    function stopTemporalMonitor() as Void {
-        try {
-            Background.deleteTemporalEvent();
-        } catch (error) {
-            System.println("NearSentry temporal monitor deletion failed: " + error);
-        }
     }
 
     function requestWake(message) as Void {

@@ -11,22 +11,6 @@ Shared Connect IQ application ID:
 
 `d3bc778912b844e69b096a9e1a3e8b42`
 
-## Prerequisites
-
-Install Garmin Connect IQ SDK Manager on Windows, download an SDK, and set it as current.
-
-The build script reads:
-
-`%APPDATA%\Garmin\ConnectIQ\current-sdk.cfg`
-
-A Garmin developer signing key is also required. With the Garmin Monkey C VS Code extension installed, use **Ctrl+Shift+P → Monkey C: Generate a Developer Key** and save it as:
-
-`watch\garmin\developer_key.der`
-
-The build script can also use an existing key referenced by the `CIQ_DEVELOPER_KEY` environment variable. Keys are intentionally ignored by Git.
-
-Connect IQ SDK 9.2.0 on Windows may place `monkeyc.bat` directly in the SDK root rather than under `bin\`; the NearSentry build script supports both layouts.
-
 ## Build
 
 From repository root:
@@ -41,38 +25,44 @@ Expected output:
 
 `watch\garmin\build\NearSentry-fenix7x.prg`
 
-## Install on the Fenix 7X
+## Install
 
-Connect the Fenix 7X to the computer by USB.
-
-Use Garmin's normal sideload path for a Connect IQ PRG and copy:
-
-`NearSentry-fenix7x.prg`
-
-to:
+Connect the Fenix 7X by USB and copy the PRG to:
 
 `GARMIN\APPS\`
 
-Safely disconnect the watch. NearSentry should appear in the Apps list.
+Safely disconnect the watch and open NearSentry.
+
+The current build uses `BOOT-2` as its startup marker.
 
 ## Pair with Android
 
 1. Keep Garmin Connect installed and the Fenix connected.
-2. Install the latest NearSentry Android build.
-3. In NearSentry, enroll the Fenix as the trusted Garmin device.
-4. Open Diagnostics.
-5. Press **Test watch alarm** while the watch is connected.
-6. The Android diagnostics field `Watch app status` should no longer report `watch:not_installed`.
-7. Arm phone protection and verify that the watch receives `ARMED`.
+2. Install the current NearSentry Android build.
+3. Enroll the Fenix as the trusted Garmin anchor.
+4. Verify Android Diagnostics can PING the watch.
 
-## Separation test
+## Physical controls
 
-For immediate NearSentry-controlled watch vibration, keep the NearSentry watch app active, arm the phone, and then move the watch/phone apart.
+- Top-right **START/STOP**: START when disarmed; STOP when armed.
+- Bottom-left **DOWN**: MUTE/UNMUTE while ALARM is active.
 
-The watch independently checks Garmin's `phoneConnected` state and applies the synchronized grace interval.
+START is rejected when the watch already reports PHONE DISCONNECTED.
 
-## Platform limitation
+During ALARM, START/STOP cannot disarm. DOWN only mutes the watch output; Android remains alarming until authenticated dismissal.
 
-Garmin Connect IQ does not allow `Toybox.Attention.vibrate()` or `playTone()` in a background process. A background app also has no immediate phone-disconnect callback. The implemented background fallback therefore uses Garmin's minimum five-minute temporal event plus `requestApplicationWake()`.
+## Battery model
 
-For immediate watch attention while NearSentry is not foreground, Garmin's native Phone Connectivity Alert should also be enabled on the watch. Exact settings-menu wording can vary by firmware.
+The one-second connection poll runs only while the NearSentry watch UI is active.
+
+While armed in background:
+- phone-app messages are event-driven
+- a five-minute temporal watchdog is registered
+
+When stopped, the temporal watchdog is removed.
+
+Connect IQ does not provide an unrestricted one-second background watch-app daemon.
+
+For immediate system-level background separation notification, also enable Garmin's native phone connectivity alert.
+
+See `docs/01-design/GARMIN_WATCH_RUNTIME.md` for the code-level design and validation sequence.
