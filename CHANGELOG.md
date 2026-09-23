@@ -5,6 +5,9 @@ All notable NearSentry product releases are recorded here.
 ## [0.0.0.1] - 2026-09-22
 
 ### Added
+- Fenix 7X physical controls: START/STOP toggles protection and DOWN toggles persistent watch-local MUTE/UNMUTE during ALARM without disarming or dismissing Android.
+- Watch-to-Android CONTROL/START and CONTROL/STOP synchronization plus passive Android Connect IQ listener registration.
+- Armed-only Garmin background policy: event-driven phone messages and a five-minute watchdog; one-second connection polling remains foreground-only for battery efficiency.
 - Fenix 7X Connect IQ companion app with synchronized armed state, foreground phone-disconnect detection, watch vibration/tone alarm, background phone-message handling, five-minute Garmin background fallback, diagnostics and build tooling.
 - Android-to-watch command bridge using the official Garmin Connect IQ Mobile SDK and the shared NearSentry watch application ID.
 - First end-to-end NearSentry MVP.
@@ -24,6 +27,7 @@ All notable NearSentry product releases are recorded here.
 - `ANDROID_BUILD_INSTALL.BAT` for fast incremental build, in-place install, and launch on the directly connected Android device without cleaning or uninstalling.
 
 ### Fixed
+- Garmin anchor monitoring now unregisters only device-status callbacks on stop and preserves the independent application-message listener used by Fenix controls.
 - Garmin Android watch messaging now owns explicit Connect IQ SDK initialization/readiness, queues the most recent command until `onSdkReady()`, and exposes transport-stage diagnostics for SDK, device, app and send operations.
 - Garmin watch app now registers foreground phone messaging during both `onStart()` and `getInitialView()`, and resets persisted Last-command diagnostics to `BOOT-1` on each foreground startup so stale messages cannot be mistaken for live transport.
 - Added self-repair for the trusted Garmin anchor after watch reset/re-pair: when the stored device identifier is stale but exactly one connected Garmin with the same enrolled name is present, NearSentry refreshes the stored identifier before watch messaging.
