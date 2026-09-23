@@ -11,17 +11,69 @@ import com.garmin.android.connectiq.exception.ServiceUnavailableException
 class GarminWatchMessenger(
     context: Context,
 ) {
+    private val appContext = context.applicationContext
     private val connectIQ =
         ConnectIQ.getInstance(
-            context.applicationContext,
+            appContext,
             ConnectIQ.IQConnectType.WIRELESS,
         )
 
     @Volatile
+    private var ready = false
+
+    @Volatile
+    private var initializing = false
+
+    @Volatile
     private var inboundListener: ((Map<String, Any?>) -> Unit)? = null
+
+    @Volatile
+    private var traceListener: ((String) -> Unit)? = null
+
+    private data class PendingSend(
+        val anchorId: String?,
+        val command: String,
+        val graceMs: Int,
+        val reason: String,
+        val requestOpen: Boolean,
+        val callback: (String) -> Unit,
+    )
+
+    private val pending = ArrayDeque<PendingSend>()
+
+    private val sdkListener =
+        object : ConnectIQ.ConnectIQListener {
+            override fun onInitializeError(errStatus: ConnectIQ.IQSdkErrorStatus) {
+                ready = false
+                initializing = false
+                trace("sdk:error:${errStatus.name.lowercase()}")
+                failPending("watch:sdk_initialize_error:${errStatus.name.lowercase()}")
+            }
+
+            override fun onSdkReady() {
+                ready = true
+                initializing = false
+                trace("sdk:ready")
+                drainPending()
+            }
+
+            override fun onSdkShutDown() {
+                ready = false
+                initializing = false
+                trace("sdk:shutdown")
+            }
+        }
+
+    init {
+        ensureInitialized()
+    }
 
     fun setInboundListener(listener: ((Map<String, Any?>) -> Unit)?) {
         inboundListener = listener
+    }
+
+    fun setTraceListener(listener: ((String) -> Unit)?) {
+        traceListener = listener
     }
 
     fun send(
@@ -32,69 +84,154 @@ class GarminWatchMessenger(
         requestOpen: Boolean,
         callback: (String) -> Unit,
     ) {
-        if (anchorId.isNullOrBlank()) {
-            callback("watch:no_anchor")
+        val request =
+            PendingSend(
+                anchorId = anchorId,
+                command = command,
+                graceMs = graceMs,
+                reason = reason,
+                requestOpen = requestOpen,
+                callback = callback,
+            )
+
+        if (!ready) {
+            synchronized(pending) {
+                pending.clear()
+                pending.addLast(request)
+            }
+            trace("send:$command:waiting_for_sdk")
+            ensureInitialized()
             return
         }
 
-        val device = try {
-            (connectIQ.knownDevices ?: emptyList()).firstOrNull {
+        sendReady(request)
+    }
+
+    private fun ensureInitialized() {
+        if (ready || initializing) return
+
+        initializing = true
+        trace("sdk:initializing")
+        try {
+            connectIQ.initialize(appContext, true, sdkListener)
+        } catch (error: Exception) {
+            ready = false
+            initializing = false
+            trace("sdk:initialize_exception:${error.javaClass.simpleName}")
+            failPending("watch:sdk_initialize_failed:${error.javaClass.simpleName}")
+        }
+    }
+
+    private fun drainPending() {
+        val requests =
+            synchronized(pending) {
+                buildList {
+                    while (pending.isNotEmpty()) {
+                        add(pending.removeFirst())
+                    }
+                }
+            }
+        requests.forEach(::sendReady)
+    }
+
+    private fun failPending(status: String) {
+        val requests =
+            synchronized(pending) {
+                buildList {
+                    while (pending.isNotEmpty()) {
+                        add(pending.removeFirst())
+                    }
+                }
+            }
+        requests.forEach { it.callback(status) }
+    }
+
+    private fun sendReady(request: PendingSend) {
+        val anchorId = request.anchorId
+        if (anchorId.isNullOrBlank()) {
+            trace("device:no_anchor")
+            request.callback("watch:no_anchor")
+            return
+        }
+
+        val devices =
+            try {
+                connectIQ.knownDevices ?: emptyList()
+            } catch (_: InvalidStateException) {
+                ready = false
+                trace("device:sdk_not_ready")
+                request.callback("watch:sdk_not_ready")
+                ensureInitialized()
+                return
+            } catch (_: ServiceUnavailableException) {
+                trace("device:garmin_connect_unavailable")
+                request.callback("watch:garmin_connect_unavailable")
+                return
+            }
+
+        trace(
+            "device:known=" +
+                devices.joinToString(",") {
+                    "${it.friendlyName}:${it.deviceIdentifier}"
+                },
+        )
+
+        val device =
+            devices.firstOrNull {
                 it.deviceIdentifier.toString() == anchorId
             }
-        } catch (_: InvalidStateException) {
-            callback("watch:sdk_not_ready")
-            return
-        } catch (_: ServiceUnavailableException) {
-            callback("watch:garmin_connect_unavailable")
-            return
-        }
 
         if (device == null) {
-            callback("watch:device_not_exposed")
+            trace("device:not_found:$anchorId")
+            request.callback("watch:device_not_exposed")
             return
         }
 
-        val status = try {
-            connectIQ.getDeviceStatus(device)
-        } catch (_: Exception) {
-            IQDevice.IQDeviceStatus.UNKNOWN
-        }
+        val status =
+            try {
+                connectIQ.getDeviceStatus(device)
+            } catch (error: Exception) {
+                trace("device:status_error:${error.javaClass.simpleName}")
+                IQDevice.IQDeviceStatus.UNKNOWN
+            }
+
+        trace("device:found:${device.friendlyName}:${status.name.lowercase()}")
 
         if (status != IQDevice.IQDeviceStatus.CONNECTED) {
-            callback("watch:device_${status.name.lowercase()}")
+            request.callback("watch:device_${status.name.lowercase()}")
             return
         }
 
         try {
+            trace("app:probing")
             connectIQ.getApplicationInfo(
                 WATCH_APP_ID,
                 device,
                 object : ConnectIQ.IQApplicationInfoListener {
                     override fun onApplicationInfoReceived(app: IQApp) {
+                        trace("app:found")
                         registerInbound(device, app)
-                        sendInstalled(
-                            device = device,
-                            app = app,
-                            command = command,
-                            graceMs = graceMs,
-                            reason = reason,
-                            requestOpen = requestOpen,
-                            callback = callback,
-                        )
+                        sendInstalled(device, app, request)
                     }
 
                     override fun onApplicationNotInstalled(applicationId: String) {
-                        callback("watch:not_installed")
+                        trace("app:not_installed:$applicationId")
+                        request.callback("watch:not_installed")
                     }
                 },
             )
         } catch (_: InvalidStateException) {
-            callback("watch:sdk_not_ready")
+            ready = false
+            trace("app:sdk_not_ready")
+            request.callback("watch:sdk_not_ready")
+            ensureInitialized()
         } catch (_: ServiceUnavailableException) {
-            callback("watch:garmin_connect_unavailable")
+            trace("app:garmin_connect_unavailable")
+            request.callback("watch:garmin_connect_unavailable")
         } catch (error: Exception) {
             Log.e(TAG, "Unable to inspect NearSentry watch app", error)
-            callback("watch:probe_failed:${error.javaClass.simpleName}")
+            trace("app:probe_failed:${error.javaClass.simpleName}")
+            request.callback("watch:probe_failed:${error.javaClass.simpleName}")
         }
     }
 
@@ -106,7 +243,9 @@ class GarminWatchMessenger(
 
         try {
             connectIQ.registerForAppEvents(device, app) { _, _, message, status ->
+                trace("inbound:${status.name.lowercase()}:count=${message.size}")
                 Log.i(TAG, "Inbound app event status=${status.name} message=$message")
+
                 if (message.isEmpty()) {
                     inboundListener?.invoke(
                         mapOf(
@@ -118,7 +257,6 @@ class GarminWatchMessenger(
                 }
 
                 message.forEach { item ->
-                    @Suppress("UNCHECKED_CAST")
                     val parsed =
                         if (item is Map<*, *>) {
                             item.entries.associate { entry ->
@@ -135,55 +273,68 @@ class GarminWatchMessenger(
                     )
                 }
             }
+            trace("inbound:registered")
         } catch (error: Exception) {
             Log.e(TAG, "Unable to register for NearSentry watch app events", error)
+            trace("inbound:register_failed:${error.javaClass.simpleName}")
         }
     }
 
     private fun sendInstalled(
         device: IQDevice,
         app: IQApp,
-        command: String,
-        graceMs: Int,
-        reason: String,
-        requestOpen: Boolean,
-        callback: (String) -> Unit,
+        request: PendingSend,
     ) {
-        val payload = mapOf<String, Any>(
-            "protocol" to PROTOCOL_VERSION,
-            "command" to command,
-            "graceMs" to graceMs,
-            "reason" to reason,
-        )
+        val payload =
+            mapOf<String, Any>(
+                "protocol" to PROTOCOL_VERSION,
+                "command" to request.command,
+                "graceMs" to request.graceMs,
+                "reason" to request.reason,
+            )
 
         try {
+            trace("send:${request.command}:dispatch")
             connectIQ.sendMessage(device, app, payload) { _, _, status ->
                 val result = "watch:message_${status.name.lowercase()}"
-                Log.i(TAG, "$command -> $result")
-                callback(result)
+                trace("send:${request.command}:${status.name.lowercase()}")
+                Log.i(TAG, "${request.command} -> $result")
+                request.callback(result)
 
-                if (requestOpen) {
+                if (request.requestOpen) {
                     requestOpen(device, app)
                 }
             }
         } catch (_: InvalidStateException) {
-            callback("watch:sdk_not_ready")
+            ready = false
+            trace("send:${request.command}:sdk_not_ready")
+            request.callback("watch:sdk_not_ready")
+            ensureInitialized()
         } catch (_: ServiceUnavailableException) {
-            callback("watch:garmin_connect_unavailable")
+            trace("send:${request.command}:garmin_connect_unavailable")
+            request.callback("watch:garmin_connect_unavailable")
         } catch (error: Exception) {
-            Log.e(TAG, "Unable to send $command to NearSentry watch app", error)
-            callback("watch:send_failed:${error.javaClass.simpleName}")
+            Log.e(TAG, "Unable to send ${request.command} to NearSentry watch app", error)
+            trace("send:${request.command}:failed:${error.javaClass.simpleName}")
+            request.callback("watch:send_failed:${error.javaClass.simpleName}")
         }
     }
 
     private fun requestOpen(device: IQDevice, app: IQApp) {
         try {
             connectIQ.openApplication(device, app) { _, _, status ->
+                trace("open:${status.name.lowercase()}")
                 Log.i(TAG, "Watch open request: ${status.name.lowercase()}")
             }
         } catch (error: Exception) {
+            trace("open:failed:${error.javaClass.simpleName}")
             Log.w(TAG, "Unable to request NearSentry watch app open", error)
         }
+    }
+
+    private fun trace(value: String) {
+        Log.i(TAG, value)
+        traceListener?.invoke(value)
     }
 
     companion object {

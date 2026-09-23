@@ -29,12 +29,19 @@ class SentryRuntime private constructor(
     private var lastWatchAppStatus = "not_checked"
     private var lastWatchCommand = "none"
     private var lastWatchAck = "none"
+    private var lastWatchTransportTrace = "none"
     private var graceRunnable: Runnable? = null
     private var countdownRunnable: Runnable? = null
 
     init {
         watchMessenger.setInboundListener { payload ->
             handler.post { handleWatchInbound(payload) }
+        }
+        watchMessenger.setTraceListener { value ->
+            handler.post {
+                lastWatchTransportTrace = value
+                publishSnapshot()
+            }
         }
         engine.setGraceMs(repository.settings().graceSeconds * 1000L)
         engine.restoreAsDegradedIfArmed(repository.armedIntended())
@@ -330,6 +337,7 @@ class SentryRuntime private constructor(
             "watchAppStatus" to lastWatchAppStatus,
             "watchLastCommand" to lastWatchCommand,
             "watchLastAck" to lastWatchAck,
+            "watchTransportTrace" to lastWatchTransportTrace,
             "message" to lastMessage,
             "graceRemainingMs" to remaining,
             "prerequisites" to prerequisites.snapshot(),

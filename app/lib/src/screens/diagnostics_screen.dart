@@ -21,6 +21,7 @@ class DiagnosticsScreen extends StatelessWidget {
         _Row('Watch app status', snapshot.watchAppStatus),
         _Row('Watch last command', snapshot.watchLastCommand),
         _Row('Watch last ACK', snapshot.watchLastAck),
+        _Row('Watch transport', snapshot.watchTransportTrace),
         _Row('Simulation', snapshot.simulationMode.toString()),
         _Row('Message', snapshot.message),
         const SizedBox(height: 20),
