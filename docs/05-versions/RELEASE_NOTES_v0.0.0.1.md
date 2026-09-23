@@ -35,11 +35,10 @@ Physically verified during the development cycle on Samsung Android + Garmin Fen
 - Foreground Bluetooth disconnect produced PHONE DISCONNECTED -> ALARM.
 - Watch vibration and audible alarm were observed.
 
-Final release gate before publishing:
+Final validation gap:
 
-- rebuild Android from the final release-candidate HEAD
-- rebuild Garmin from the final release-candidate HEAD
-- verify physical reconnect stops the real separation alarm and returns watch/Android to ARMED/PROTECTED
+- the final reconnect-recovery patch was not reinstalled and physically revalidated before release closure
+- reconnect recovery is therefore shipped in v0.0.0.1 as implemented but unverified on the final release commit
 
 ## Known limitations
 
