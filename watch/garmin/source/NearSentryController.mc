@@ -186,7 +186,12 @@ class NearSentryController {
             }
 
             if (Attention has :playTone) {
-                Attention.playTone(Attention.TONE_ALARM);
+                // Use Garmin's built-in attention tones rather than a custom
+                // ToneProfile. These are supported by the fenix 7X family and
+                // are more noticeable than a single TONE_ALARM pulse.
+                Attention.playTone(Attention.TONE_CANARY);
+                Attention.playTone(Attention.TONE_LOUD_BEEP);
+                Attention.playTone(Attention.TONE_CANARY);
             }
 
             if (Attention has :backlight) {
