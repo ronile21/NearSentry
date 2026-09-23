@@ -36,9 +36,7 @@ class NearSentryView extends WatchUi.View {
     }
 
     function onUpdate(dc) {
-        var width = dc.getWidth();
-        var height = dc.getHeight();
-        var cx = width / 2;
+        var cx = dc.getWidth() / 2;
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
@@ -54,25 +52,12 @@ class NearSentryView extends WatchUi.View {
             statusText = "ARMED";
         }
 
-        dc.setColor(statusColor, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(cx, 66, 38);
-
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.fillCircle(cx, 66, 27);
-
-        dc.setColor(statusColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(
-            cx,
-            48,
-            Graphics.FONT_LARGE,
-            "N",
-            Graphics.TEXT_JUSTIFY_CENTER
-        );
-
+        // Keep the watch screen intentionally simple for now.
+        // Fixed vertical spacing avoids overlapping text on the 280x280 fēnix 7X display.
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             cx,
-            112,
+            28,
             Graphics.FONT_MEDIUM,
             "NearSentry",
             Graphics.TEXT_JUSTIFY_CENTER
@@ -81,7 +66,7 @@ class NearSentryView extends WatchUi.View {
         dc.setColor(statusColor, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             cx,
-            148,
+            82,
             Graphics.FONT_LARGE,
             statusText,
             Graphics.TEXT_JUSTIFY_CENTER
@@ -93,7 +78,7 @@ class NearSentryView extends WatchUi.View {
         );
         dc.drawText(
             cx,
-            198,
+            144,
             Graphics.FONT_SMALL,
             _phoneConnected ? "PHONE CONNECTED" : "PHONE DISCONNECTED",
             Graphics.TEXT_JUSTIFY_CENTER
@@ -102,7 +87,7 @@ class NearSentryView extends WatchUi.View {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
         dc.drawText(
             cx,
-            height - 54,
+            190,
             Graphics.FONT_XTINY,
             "Last: " + _lastCommand,
             Graphics.TEXT_JUSTIFY_CENTER
@@ -111,7 +96,7 @@ class NearSentryView extends WatchUi.View {
         if (_alarm && _reason.length() > 0) {
             dc.drawText(
                 cx,
-                height - 30,
+                218,
                 Graphics.FONT_XTINY,
                 _reason,
                 Graphics.TEXT_JUSTIFY_CENTER
