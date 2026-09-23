@@ -43,12 +43,17 @@ class NearSentryBackgroundTransmitListener extends Communications.ConnectionList
 
 module NearSentryTransport {
     function ackPayload(command, status) {
+        var deviceSettings = System.getDeviceSettings();
         return {
             "type" => "ACK",
             "protocol" => 1,
             "command" => command,
             "status" => status,
-            "armed" => NearSentryState.isArmed()
+            "armed" => NearSentryState.isArmed(),
+            "serviceEnabled" => NearSentryState.isServiceEnabled(),
+            "tonesOn" => deviceSettings.tonesOn,
+            "vibrateOn" => deviceSettings.vibrateOn,
+            "phoneConnected" => deviceSettings.phoneConnected
         };
     }
 

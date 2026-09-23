@@ -10,6 +10,7 @@ data class SentrySettings(
     val graceSeconds: Int,
     val soundEnabled: Boolean,
     val vibrationEnabled: Boolean,
+    val watchServiceEnabled: Boolean,
     val telemetryRetention: Int,
     val simulationMode: Boolean,
 )
@@ -55,6 +56,7 @@ class SentryRepository(context: Context) {
         graceSeconds = preferences.getInt("graceSeconds", 3).coerceIn(1, 15),
         soundEnabled = preferences.getBoolean("soundEnabled", true),
         vibrationEnabled = preferences.getBoolean("vibrationEnabled", true),
+        watchServiceEnabled = preferences.getBoolean("watchServiceEnabled", true),
         telemetryRetention =
             preferences.getInt("telemetryRetention", 250).coerceIn(50, 1000),
         simulationMode = preferences.getBoolean("simulationMode", false),
@@ -66,6 +68,7 @@ class SentryRepository(context: Context) {
             .putInt("graceSeconds", settings.graceSeconds.coerceIn(1, 15))
             .putBoolean("soundEnabled", settings.soundEnabled)
             .putBoolean("vibrationEnabled", settings.vibrationEnabled)
+            .putBoolean("watchServiceEnabled", settings.watchServiceEnabled)
             .putInt("telemetryRetention", settings.telemetryRetention.coerceIn(50, 1000))
             .putBoolean("simulationMode", settings.simulationMode)
             .putInt("schemaVersion", 1)

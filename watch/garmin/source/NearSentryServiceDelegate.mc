@@ -22,7 +22,15 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         NearSentryState.setLastCommand(command);
         NearSentryState.setGraceMs(NearSentryState.graceFrom(data));
 
-        if (command == "ARMED") {
+        if (command == "SERVICE_ENABLE") {
+            NearSentryState.setServiceEnabled(true);
+            if (NearSentryState.isArmed()) {
+                ensureTemporalMonitor();
+            }
+        } else if (command == "SERVICE_DISABLE") {
+            NearSentryState.setServiceEnabled(false);
+            stopTemporalMonitor();
+        } else if (command == "ARMED" && NearSentryState.isServiceEnabled()) {
             NearSentryState.setArmed(true);
             NearSentryState.setAlarmPending(false);
             NearSentryState.setLastReason("phone_armed");
@@ -50,7 +58,9 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
     }
 
     function onTemporalEvent() as Void {
-        if (!NearSentryState.isArmed()) {
+        if (!NearSentryState.isServiceEnabled() ||
+            !NearSentryState.isArmed()
+        ) {
             stopTemporalMonitor();
             Background.exit(null);
             return;

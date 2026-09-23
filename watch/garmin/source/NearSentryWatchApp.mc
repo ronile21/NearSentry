@@ -105,7 +105,9 @@ class NearSentryWatchApp extends Application.AppBase {
         try {
             Background.registerForPhoneAppMessageEvent();
 
-            if (NearSentryState.isArmed()) {
+            if (NearSentryState.isServiceEnabled() &&
+                NearSentryState.isArmed()
+            ) {
                 Background.registerForTemporalEvent(new Time.Duration(5 * 60));
             }
         } catch (error) {

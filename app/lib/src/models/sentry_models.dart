@@ -167,6 +167,7 @@ class AppSettings {
     required this.graceSeconds,
     required this.soundEnabled,
     required this.vibrationEnabled,
+    required this.watchServiceEnabled,
     required this.telemetryRetention,
     required this.simulationMode,
   });
@@ -175,6 +176,7 @@ class AppSettings {
   final int graceSeconds;
   final bool soundEnabled;
   final bool vibrationEnabled;
+  final bool watchServiceEnabled;
   final int telemetryRetention;
   final bool simulationMode;
 
@@ -183,6 +185,7 @@ class AppSettings {
         graceSeconds: 3,
         soundEnabled: true,
         vibrationEnabled: true,
+        watchServiceEnabled: true,
         telemetryRetention: 250,
         simulationMode: false,
       );
@@ -193,6 +196,7 @@ class AppSettings {
       graceSeconds: (map['graceSeconds'] as num?)?.toInt() ?? 3,
       soundEnabled: map['soundEnabled'] != false,
       vibrationEnabled: map['vibrationEnabled'] != false,
+      watchServiceEnabled: map['watchServiceEnabled'] != false,
       telemetryRetention:
           (map['telemetryRetention'] as num?)?.toInt() ?? 250,
       simulationMode: map['simulationMode'] == true,
@@ -204,6 +208,7 @@ class AppSettings {
         'graceSeconds': graceSeconds,
         'soundEnabled': soundEnabled,
         'vibrationEnabled': vibrationEnabled,
+        'watchServiceEnabled': watchServiceEnabled,
         'telemetryRetention': telemetryRetention,
         'simulationMode': simulationMode,
       };

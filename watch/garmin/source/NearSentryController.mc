@@ -35,8 +35,15 @@ class NearSentryController {
     function restoreState() as Void {
         var connected = System.getDeviceSettings().phoneConnected;
         _view.setPhoneConnected(connected);
-        _view.setArmed(NearSentryState.isArmed());
+        _view.setServiceEnabled(NearSentryState.isServiceEnabled());
+        _view.setArmed(
+            NearSentryState.isServiceEnabled() && NearSentryState.isArmed()
+        );
         _view.setLastCommand(NearSentryState.getLastCommand());
+        _view.setToneState(
+            System.getDeviceSettings().tonesOn,
+            System.getDeviceSettings().vibrateOn
+        );
 
         if (NearSentryState.isAlarmPending()) {
             startAlarm(NearSentryState.getLastReason());
@@ -58,7 +65,16 @@ class NearSentryController {
         NearSentryState.setGraceMs(NearSentryState.graceFrom(data));
         _view.setLastCommand(command);
 
-        if (command == "ARMED") {
+        if (command == "SERVICE_ENABLE") {
+            NearSentryState.setServiceEnabled(true);
+            _view.setServiceEnabled(true);
+        } else if (command == "SERVICE_DISABLE") {
+            NearSentryState.setServiceEnabled(false);
+            _view.setServiceEnabled(false);
+            _view.setArmed(false);
+            _disconnectedAt = null;
+            stopAlarm(true);
+        } else if (command == "ARMED" && NearSentryState.isServiceEnabled()) {
             NearSentryState.setArmed(true);
             NearSentryState.setAlarmPending(false);
             _view.setArmed(true);
@@ -85,7 +101,10 @@ class NearSentryController {
     function onPhoneConnectedChanged(connected) as Void {
         _view.setPhoneConnected(connected);
 
-        if (!NearSentryState.isArmed() || _alarmActive) {
+        if (!NearSentryState.isServiceEnabled() ||
+            !NearSentryState.isArmed() ||
+            _alarmActive
+        ) {
             WatchUi.requestUpdate();
             return;
         }
@@ -103,8 +122,13 @@ class NearSentryController {
         var connected = System.getDeviceSettings().phoneConnected;
         _view.setPhoneConnected(connected);
 
-        if (!NearSentryState.isArmed() || _alarmActive) {
-            if (!NearSentryState.isArmed()) {
+        if (!NearSentryState.isServiceEnabled() ||
+            !NearSentryState.isArmed() ||
+            _alarmActive
+        ) {
+            if (!NearSentryState.isServiceEnabled() ||
+                !NearSentryState.isArmed()
+            ) {
                 _disconnectedAt = null;
             }
             WatchUi.requestUpdate();
@@ -173,6 +197,12 @@ class NearSentryController {
         }
 
         try {
+            var deviceSettings = System.getDeviceSettings();
+            _view.setToneState(
+                deviceSettings.tonesOn,
+                deviceSettings.vibrateOn
+            );
+
             if (Attention has :vibrate) {
                 Attention.vibrate([
                     new Attention.VibeProfile(100, 900),
@@ -186,7 +216,19 @@ class NearSentryController {
             }
 
             if (Attention has :playTone) {
-                Attention.playTone(Attention.TONE_ALARM);
+                if (Attention has :ToneProfile) {
+                    Attention.playTone({
+                        :toneProfile => [
+                            new Attention.ToneProfile(2500, 350),
+                            new Attention.ToneProfile(4500, 350),
+                            new Attention.ToneProfile(7000, 350),
+                            new Attention.ToneProfile(4500, 350)
+                        ],
+                        :repeatCount => 4
+                    });
+                } else {
+                    Attention.playTone(Attention.TONE_LOUD_BEEP);
+                }
             }
 
             if (Attention has :backlight) {
