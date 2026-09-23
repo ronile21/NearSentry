@@ -19,7 +19,15 @@ class NearSentryWatchApp extends Application.AppBase {
     }
 
     function onStart(state) as Void {
+        // Register the foreground phone callback as early as possible.
+        // This is intentionally repeated in getInitialView() because Garmin
+        // may recreate the app UI independently of the previous foreground
+        // registration after reboot/update/sideload.
+        registerForegroundMessages();
         registerBackgroundEvents();
+
+        // Do not trust persisted Last: values as proof of a new message.
+        NearSentryState.setLastCommand("BOOT-1");
     }
 
     function onStop(state) as Void {
@@ -37,13 +45,7 @@ class NearSentryWatchApp extends Application.AppBase {
         _view = new NearSentryView();
         _controller = new NearSentryController(_view);
 
-        try {
-            Communications.registerForPhoneAppMessages(
-                method(:onForegroundPhoneMessage)
-            );
-        } catch (error) {
-            System.println("NearSentry phone message registration failed: " + error);
-        }
+        registerForegroundMessages();
 
         if (_pendingData != null) {
             _controller.handlePhoneMessage(_pendingData);
@@ -57,6 +59,20 @@ class NearSentryWatchApp extends Application.AppBase {
 
     function getServiceDelegate() {
         return [new NearSentryServiceDelegate()];
+    }
+
+    function registerForegroundMessages() as Void {
+        try {
+            Communications.registerForPhoneAppMessages(
+                method(:onForegroundPhoneMessage)
+            );
+            System.println("NearSentry foreground phone messaging registered");
+        } catch (error) {
+            System.println(
+                "NearSentry foreground phone message registration failed: " +
+                error
+            );
+        }
     }
 
     function onForegroundPhoneMessage(msg as Communications.PhoneAppMessage) as Void {
