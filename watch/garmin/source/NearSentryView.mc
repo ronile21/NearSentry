@@ -10,6 +10,15 @@ class NearSentryView extends WatchUi.View {
     var _reason;
     var _lastCommand;
 
+    var _systemLeft;
+    var _systemTop;
+    var _systemRight;
+    var _systemBottom;
+    var _muteLeft;
+    var _muteTop;
+    var _muteRight;
+    var _muteBottom;
+
     function initialize() {
         WatchUi.View.initialize();
         _armed = false;
@@ -18,6 +27,15 @@ class NearSentryView extends WatchUi.View {
         _phoneConnected = System.getDeviceSettings().phoneConnected;
         _reason = "";
         _lastCommand = "NONE";
+
+        _systemLeft = 0;
+        _systemTop = 0;
+        _systemRight = 0;
+        _systemBottom = 0;
+        _muteLeft = 0;
+        _muteTop = 0;
+        _muteRight = 0;
+        _muteBottom = 0;
     }
 
     function setArmed(value) { _armed = value == true; }
@@ -34,8 +52,37 @@ class NearSentryView extends WatchUi.View {
         _lastCommand = value == null ? "NONE" : value.toString();
     }
 
+    function actionAt(x, y) {
+        if (inside(x, y, _systemLeft, _systemTop, _systemRight, _systemBottom)) {
+            return "SYSTEM_TOGGLE";
+        }
+
+        if (_alarm &&
+            inside(x, y, _muteLeft, _muteTop, _muteRight, _muteBottom)) {
+            return "MUTE_TOGGLE";
+        }
+
+        return null;
+    }
+
+    function inside(x, y, left, top, right, bottom) {
+        return x >= left && x <= right && y >= top && y <= bottom;
+    }
+
     function onUpdate(dc) {
-        var cx = dc.getWidth() / 2;
+        var width = dc.getWidth();
+        var height = dc.getHeight();
+        var cx = width / 2;
+
+        _systemLeft = 55;
+        _systemRight = width - 55;
+        _systemTop = height - 100;
+        _systemBottom = _systemTop + 38;
+
+        _muteLeft = 85;
+        _muteRight = width - 85;
+        _muteTop = height - 55;
+        _muteBottom = _muteTop + 30;
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
@@ -52,46 +99,74 @@ class NearSentryView extends WatchUi.View {
         }
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 22, Graphics.FONT_MEDIUM, "NearSentry",
+        dc.drawText(cx, 14, Graphics.FONT_SMALL, "NearSentry V2",
             Graphics.TEXT_JUSTIFY_CENTER);
 
         dc.setColor(statusColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 68, Graphics.FONT_LARGE, statusText,
+        dc.drawText(cx, 48, Graphics.FONT_LARGE, statusText,
             Graphics.TEXT_JUSTIFY_CENTER);
-
-        if (_alarmMuted) {
-            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
-            dc.drawText(cx, 112, Graphics.FONT_XTINY, "WATCH MUTED",
-                Graphics.TEXT_JUSTIFY_CENTER);
-        }
 
         dc.setColor(
             _phoneConnected ? Graphics.COLOR_GREEN : Graphics.COLOR_RED,
             Graphics.COLOR_TRANSPARENT
         );
         dc.drawText(
-            cx, 140, Graphics.FONT_SMALL,
+            cx, 96, Graphics.FONT_SMALL,
             _phoneConnected ? "PHONE CONNECTED" : "PHONE DISCONNECTED",
             Graphics.TEXT_JUSTIFY_CENTER
         );
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 184, Graphics.FONT_XTINY,
+        dc.drawText(cx, 128, Graphics.FONT_XTINY,
             "Last: " + _lastCommand, Graphics.TEXT_JUSTIFY_CENTER);
 
         if (_alarm && _reason.length() > 0) {
-            dc.drawText(cx, 207, Graphics.FONT_XTINY, _reason,
+            dc.drawText(cx, 148, Graphics.FONT_XTINY, _reason,
                 Graphics.TEXT_JUSTIFY_CENTER);
         }
 
-        var actionText = "START/STOP: START";
-        if (_alarm) {
-            actionText = _alarmMuted ? "DOWN: UNMUTE" : "DOWN: MUTE";
-        } else if (_armed) {
-            actionText = "START/STOP: STOP";
-        }
+        var switchColor = _armed ? Graphics.COLOR_GREEN : Graphics.COLOR_RED;
+        dc.setColor(switchColor, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(
+            _systemLeft,
+            _systemTop,
+            _systemRight - _systemLeft,
+            _systemBottom - _systemTop
+        );
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(
+            cx,
+            _systemTop + 8,
+            Graphics.FONT_SMALL,
+            _armed ? "SYSTEM: ON" : "SYSTEM: OFF",
+            Graphics.TEXT_JUSTIFY_CENTER
+        );
 
-        dc.drawText(cx, 244, Graphics.FONT_XTINY, actionText,
-            Graphics.TEXT_JUSTIFY_CENTER);
+        if (_alarm) {
+            dc.setColor(Graphics.COLOR_YELLOW, Graphics.COLOR_TRANSPARENT);
+            dc.fillRectangle(
+                _muteLeft,
+                _muteTop,
+                _muteRight - _muteLeft,
+                _muteBottom - _muteTop
+            );
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                cx,
+                _muteTop + 5,
+                Graphics.FONT_XTINY,
+                _alarmMuted ? "UNMUTE" : "MUTE",
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
+        } else {
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            dc.drawText(
+                cx,
+                height - 50,
+                Graphics.FONT_XTINY,
+                "Tap switch or START/STOP",
+                Graphics.TEXT_JUSTIFY_CENTER
+            );
+        }
     }
 }

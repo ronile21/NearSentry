@@ -6,6 +6,7 @@ module NearSentryState {
     const KEY_ARMED = "armed";
     const KEY_ALARM_PENDING = "alarmPending";
     const KEY_ALARM_MUTED = "alarmMuted";
+    const KEY_ALARM_RECOVERABLE = "alarmRecoverable";
     const KEY_LAST_COMMAND = "lastCommand";
     const KEY_LAST_REASON = "lastReason";
     const KEY_GRACE_MS = "graceMs";
@@ -18,6 +19,14 @@ module NearSentryState {
 
     function isAlarmMuted() { return Storage.getValue(KEY_ALARM_MUTED) == true; }
     function setAlarmMuted(value) { Storage.setValue(KEY_ALARM_MUTED, value == true); }
+
+    function isAlarmRecoverable() {
+        return Storage.getValue(KEY_ALARM_RECOVERABLE) == true;
+    }
+
+    function setAlarmRecoverable(value) {
+        Storage.setValue(KEY_ALARM_RECOVERABLE, value == true);
+    }
 
     function setLastCommand(command) { Storage.setValue(KEY_LAST_COMMAND, command); }
 

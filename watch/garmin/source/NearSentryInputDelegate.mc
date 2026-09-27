@@ -21,4 +21,9 @@ class NearSentryInputDelegate extends WatchUi.BehaviorDelegate {
         }
         return false;
     }
+
+    function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {
+        var point = clickEvent.getCoordinates();
+        return _controller.handleTap(point[0], point[1]);
+    }
 }

@@ -24,17 +24,20 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
             NearSentryState.setArmed(true);
             NearSentryState.setAlarmPending(false);
             NearSentryState.setAlarmMuted(false);
+            NearSentryState.setAlarmRecoverable(false);
             NearSentryState.setLastReason("phone_armed");
             NearSentryBackgroundPolicy.sync(true);
         } else if (command == "DISARMED" || command == "ALARM_STOP") {
             NearSentryState.setArmed(false);
             NearSentryState.setAlarmPending(false);
             NearSentryState.setAlarmMuted(false);
+            NearSentryState.setAlarmRecoverable(false);
             NearSentryState.setLastReason("phone_disarmed");
             NearSentryBackgroundPolicy.sync(false);
         } else if (command == "ALARM" || command == "TEST_ALARM") {
             NearSentryState.setAlarmPending(true);
             NearSentryState.setAlarmMuted(false);
+            NearSentryState.setAlarmRecoverable(command == "ALARM");
             NearSentryState.setLastReason(
                 NearSentryState.reasonFrom(data).length() > 0
                     ? NearSentryState.reasonFrom(data)
@@ -59,6 +62,7 @@ class NearSentryServiceDelegate extends System.ServiceDelegate {
         if (!connected) {
             NearSentryState.setAlarmPending(true);
             NearSentryState.setAlarmMuted(false);
+            NearSentryState.setAlarmRecoverable(true);
             NearSentryState.setLastReason("background_phone_disconnected");
             requestWake("NearSentry: phone disconnected");
             Background.exit({

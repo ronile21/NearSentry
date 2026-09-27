@@ -18,7 +18,7 @@ class NearSentryWatchApp extends Application.AppBase {
     function onStart(state) as Void {
         registerForegroundMessages();
         NearSentryBackgroundPolicy.sync(NearSentryState.isArmed());
-        NearSentryState.setLastCommand("BOOT-2");
+        NearSentryState.setLastCommand("BOOT-3");
     }
 
     function onStop(state) as Void {
