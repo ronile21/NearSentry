@@ -77,7 +77,7 @@ Do not silently change version semantics.
 
 ## Git rules
 
-- For `v0.0.0.1`, work only on branch `v0.0.0.2`.
+- For `v0.0.0.2`, work only on branch `v0.0.0.2`.
 - Do not force-push unless explicitly instructed.
 - Do not rewrite accepted history merely to make it look cleaner.
 - Do not delete ADRs or version records.
