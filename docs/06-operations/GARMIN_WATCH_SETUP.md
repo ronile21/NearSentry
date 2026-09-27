@@ -2,7 +2,7 @@
 
 ## Components
 
-NearSentry version `v0.0.0.1` contains both sides:
+NearSentry version `v0.0.0.2` contains both sides:
 
 - Android: `GarminWatchMessenger`
 - Garmin: `watch/garmin/`
@@ -32,8 +32,8 @@ Connect IQ SDK 9.2.0 on Windows may place `monkeyc.bat` directly in the SDK root
 From repository root:
 
 ```bat
-git checkout v0.0.0.1
-git pull --ff-only origin v0.0.0.1
+git checkout v0.0.0.2
+git pull --ff-only origin v0.0.0.2
 GARMIN_BUILD_WATCH.BAT
 ```
 
@@ -55,7 +55,7 @@ to:
 
 Safely disconnect the watch and open NearSentry.
 
-The current build uses `BOOT-2` as the startup marker.
+The V2 build uses `BOOT-3` as the startup marker.
 
 ## Android build
 
@@ -74,6 +74,15 @@ Keep Garmin Connect installed and connected to the Fenix.
 3. Open Diagnostics.
 4. Press **Ping watch**.
 5. Confirm the watch Last field changes to PING.
+
+## Touch-screen controls
+
+V2 adds direct on-screen controls:
+
+- `SYSTEM: ON` / `SYSTEM: OFF`: tap to toggle the whole protection system.
+- `MUTE` / `UNMUTE`: shown during ALARM and controls only watch-local sound/vibration.
+
+The SYSTEM switch uses the same controller/state path as physical START/STOP. During an active alarm, OFF remains blocked so the touch UI cannot bypass the alarm security boundary.
 
 ## Physical controls
 
@@ -116,6 +125,8 @@ For the short-grace custom watch alarm:
 6. Press DOWN and verify WATCH MUTED.
 7. Verify Android continues alarming.
 8. Press DOWN again to resume watch alarm output.
+9. Restore Bluetooth and verify PHONE CONNECTED, ARMED and Last: RECOVERED.
+10. Repeat the control test using the on-screen SYSTEM and MUTE buttons.
 
 ## Background and battery behavior
 

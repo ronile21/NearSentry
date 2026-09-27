@@ -66,7 +66,8 @@ While the watch app is active:
 - start the watch grace interval on loss
 - cancel the pending watch alarm on recovery during grace
 - after grace, repeat strong vibration and the Garmin alarm tone where supported
-- keep the local watch alarm active until `DISARMED` or `ALARM_STOP` is received
+- auto-recover a real separation alarm when phone connectivity is confirmed again, returning to ARMED/PROTECTED without disarming
+- keep TEST_ALARM latched until explicitly stopped so diagnostics remain testable
 
 When the watch app is not active:
 - a Connect IQ background service receives phone messages
@@ -76,9 +77,11 @@ When the watch app is not active:
 
 Platform boundary: Garmin does not permit `Toybox.Attention` vibration/tone calls in Connect IQ background context and exposes no immediate background phone-disconnect event. Background custom watch alarm latency therefore cannot be guaranteed at the phone's short grace interval.
 
-## Dismissal
+## Recovery and dismissal
 
-Production dismissal requires Android system authentication. Anchor recovery alone does not stop an active alarm.
+A confirmed trusted-anchor recovery after a real separation alarm stops alarm effects and returns protection to PROTECTED/ARMED. This is recovery, not disarming.
+
+Manual alarm dismissal remains protected by Android system authentication. Diagnostic TEST_ALARM is not auto-cleared merely because the devices are connected.
 
 ## Diagnostics
 
@@ -94,3 +97,13 @@ UI exposes:
 ## Developer simulator
 
 When explicitly enabled, the diagnostics screen can inject connected, disconnected, transient disconnect, recovery, degraded, alarm, and service-restart scenarios.
+
+
+## Garmin touch controls
+
+V2 exposes direct touch controls on the watch:
+
+- SYSTEM ON/OFF toggles protection through the same controller/state path as the physical START/STOP key.
+- MUTE/UNMUTE is present only during ALARM and changes only watch-local alarm output.
+- OFF remains blocked while ALARM is active.
+- taps outside the defined button hit regions have no effect.

@@ -1,10 +1,14 @@
 # Garmin Watch Runtime, Controls, Background Policy and Alarm
 
-Version: 0.0.0.1
+Version: 0.0.0.2
 
 ## Implemented controls
 
-NearSentry uses Garmin behavior events rather than hard-coded key numbers.
+V2 supports both touch-screen controls and physical Garmin keys.
+
+The primary on-screen control is a large `SYSTEM: ON/OFF` switch. Tapping it starts or stops protection when no alarm is active. During an active alarm, the security rule remains unchanged: the system switch cannot disarm the active alarm. A separate on-screen MUTE/UNMUTE button controls only watch-local alarm output.
+
+Physical controls remain available as fallback. V2 uses symbolic Garmin keys (`KEY_ENTER` / `KEY_START` and `KEY_DOWN`) rather than numeric key codes.
 
 On the Fenix five-button layout:
 - top-right START/STOP is the Select behavior
@@ -43,6 +47,16 @@ MUTE:
 DOWN again performs UNMUTE and resumes watch output.
 
 Connect IQ does not expose a documented stop-tone method. The predefined tone already emitted is short; MUTE prevents subsequent tones while the current short tone is allowed to finish.
+
+## Touch input
+
+`NearSentryInputDelegate` extends `WatchUi.InputDelegate`.
+
+- `onTap()` reads `ClickEvent.getCoordinates()` and routes taps through explicit hit-test regions in `NearSentryView`.
+- Taps outside a visible control are ignored.
+- SYSTEM ON/OFF uses the same controller path as physical START/STOP.
+- MUTE/UNMUTE is visible and active only during ALARM.
+- `onKey()` preserves physical controls without allowing generic taps to be interpreted as Select.
 
 ## Foreground alarm path
 
@@ -107,9 +121,11 @@ If the Android process has been fully killed, watch-to-phone CONTROL remains bes
 7. Press DOWN and verify WATCH MUTED and no further watch pulses.
 8. Confirm Android alarm remains active.
 9. Press DOWN again and verify watch output resumes.
-10. Restore Bluetooth; an escalated alarm must not silently dismiss itself.
-11. Authenticate on Android to dismiss the real alarm.
-12. When not alarming, START/STOP must switch to DISARMED.
+10. Restore Bluetooth; a real separation alarm must stop and the watch must show PHONE CONNECTED + ARMED + Last: RECOVERED.
+11. Verify Android also returns to PROTECTED.
+12. Trigger TEST_ALARM separately and verify ordinary connection does not auto-clear the diagnostic alarm.
+13. Tap SYSTEM ON/OFF and verify the same state transition as physical START/STOP.
+14. During ALARM, tap MUTE/UNMUTE and verify only watch-local output changes.
 
 ## Garmin references
 
@@ -135,3 +151,18 @@ When the watch foreground detector has entered ALARM because `phoneConnected` st
 Android follows the same policy: ALARM + trusted anchor present -> PROTECTED. The phone alarm controller is stopped by the normal state transition effects.
 
 This behavior is intentionally not applied to `TEST_ALARM`, so a diagnostic alarm does not disappear just because the devices were already connected.
+
+
+## V2 reconnect reconciliation
+
+V2 persists an explicit `alarmRecoverable` flag. This fixes the V1 lifecycle hole where the controller could forget that an active alarm originated from a real separation after the app was reopened.
+
+Connection state is reconciled from three independent foreground signals:
+
+1. `System.getDeviceSettings().phoneConnected` polling.
+2. `onDeviceSettingChanged(:phoneConnected, ...)`.
+3. A successfully received phone-app message, which is direct evidence that the transport is reachable.
+
+For a recoverable separation alarm, confirmed reconnect clears the pending alarm, stops watch output, sets PHONE CONNECTED, retains `armed=true`, and records `Last: RECOVERED`.
+
+`TEST_ALARM` persists `alarmRecoverable=false` and therefore is not auto-cleared by ordinary connectivity.
