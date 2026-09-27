@@ -15,6 +15,9 @@ Record evidence per row before declaring a combination supported.
 | TBD | TBD | Fenix 7X | TBD | TBD | Android -> watch TEST_ALARM | UNVERIFIED | Requires sideloaded watch PRG |
 | TBD | TBD | Fenix 7X | TBD | TBD | watch background phone message | UNVERIFIED | Validate wake request behavior |
 | TBD | TBD | Fenix 7X | TBD | TBD | watch background disconnect fallback | UNVERIFIED | Garmin temporal minimum is five minutes |
+| TBD | TBD | Fenix 7X | TBD | TBD | V2 touch SYSTEM ON/OFF | UNVERIFIED | Verify tap hit target and Android/watch state synchronization |
+| TBD | TBD | Fenix 7X | TBD | TBD | V2 touch MUTE/UNMUTE | UNVERIFIED | Verify only watch-local alarm output changes |
+| TBD | TBD | Fenix 7X | TBD | TBD | V2 alarm reconnect recovery | UNVERIFIED | Verify PHONE CONNECTED + ARMED + RECOVERED after real reconnect |
 
 ## Measurements
 

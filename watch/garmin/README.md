@@ -8,6 +8,17 @@ Connect IQ application ID:
 
 This ID is also compiled into the Android Garmin messenger and must remain identical.
 
+## V2 touch controls
+
+The Fenix 7X touch screen is used directly in V2.
+
+- Tap `SYSTEM: OFF` to start protection.
+- Tap `SYSTEM: ON` to stop protection when no alarm is active.
+- During ALARM, tap `MUTE` / `UNMUTE` to control watch-local output.
+- Physical START/STOP and DOWN controls remain supported.
+
+A real separation alarm is recoverable: when phone connectivity is confirmed again, V2 clears stale disconnected/alarm state, stops watch output and returns to ARMED. TEST_ALARM remains diagnostic and does not auto-clear merely because the phone is connected.
+
 ## Behavior
 
 The watch app stores the phone's ARMED/DISARMED state and synchronizes the configured grace interval.
