@@ -122,8 +122,9 @@ final class ProtectionEngine {
         } else if (event is AlarmDismissed) {
           next = ProtectionState.disarmed;
           reason = 'alarm_authenticated_dismissal';
-        } else if (event is AnchorRecovered) {
-          reason = 'recovery_does_not_cancel_alarm';
+        } else if (event is AnchorRecovered || event is AnchorConfirmed) {
+          next = ProtectionState.protected;
+          reason = 'anchor_recovered_after_alarm';
         } else {
           accepted = false;
         }

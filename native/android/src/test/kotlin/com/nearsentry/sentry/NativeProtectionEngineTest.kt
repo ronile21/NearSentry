@@ -34,22 +34,17 @@ class NativeProtectionEngineTest {
     }
 
     @Test
-    fun recoveryCannotDismissAlarm() {
+    fun recoveryAfterAlarmReturnsToProtected() {
         val engine = NativeProtectionEngine(1_000)
         engine.apply(NativeEngineEvent(NativeEventType.ARM, 0))
         engine.apply(NativeEngineEvent(NativeEventType.ANCHOR_PRESENT, 1))
         engine.apply(NativeEngineEvent(NativeEventType.ANCHOR_ABSENT, 2))
         engine.apply(NativeEngineEvent(NativeEventType.GRACE_EXPIRED, 1_002))
 
-        assertEquals(
-            NativeProtectionState.ALARM,
-            engine.apply(NativeEngineEvent(NativeEventType.ANCHOR_PRESENT, 2_000)).current,
-        )
-        assertEquals(
-            NativeProtectionState.DISARMED,
-            engine.apply(
-                NativeEngineEvent(NativeEventType.AUTHENTICATED_DISMISSAL, 2_001),
-            ).current,
-        )
+        val recovered =
+            engine.apply(NativeEngineEvent(NativeEventType.ANCHOR_PRESENT, 2_000))
+
+        assertEquals(NativeProtectionState.PROTECTED, recovered.current)
+        assertEquals("anchor_recovered_after_alarm", recovered.reason)
     }
 }

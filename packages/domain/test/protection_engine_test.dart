@@ -44,21 +44,16 @@ void main() {
       expect(second.graceDeadlineMicros, first.graceDeadlineMicros);
     });
 
-    test('alarm recovery cannot silently dismiss alarm', () {
+    test('alarm recovery returns to protected without disarming', () {
       final engine = ProtectionEngine();
       engine.apply(const ArmRequested(0));
       engine.apply(const AnchorConfirmed(1));
       engine.apply(const AnchorLost(2));
       engine.apply(const GraceExpired(3000002));
 
-      expect(
-        engine.apply(const AnchorRecovered(4000000)).current,
-        ProtectionState.alarm,
-      );
-      expect(
-        engine.apply(const AlarmDismissed(5000000)).current,
-        ProtectionState.disarmed,
-      );
+      final recovered = engine.apply(const AnchorRecovered(4000000));
+      expect(recovered.current, ProtectionState.protected);
+      expect(recovered.reason, 'anchor_recovered_after_alarm');
     });
 
     test('ordinary disarm cannot dismiss an active alarm', () {
