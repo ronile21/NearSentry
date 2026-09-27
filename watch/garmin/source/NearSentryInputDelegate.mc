@@ -1,24 +1,27 @@
 using Toybox.Lang as Lang;
 using Toybox.WatchUi as WatchUi;
 
-class NearSentryInputDelegate extends WatchUi.BehaviorDelegate {
+class NearSentryInputDelegate extends WatchUi.InputDelegate {
     var _controller;
 
     function initialize(controller) {
-        WatchUi.BehaviorDelegate.initialize();
+        WatchUi.InputDelegate.initialize();
         _controller = controller;
     }
 
-    function onSelect() as Lang.Boolean {
-        _controller.toggleProtection();
-        return true;
-    }
+    function onKey(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
+        var key = keyEvent.getKey();
 
-    function onNextPage() as Lang.Boolean {
-        if (_controller.isAlarmActive()) {
+        if (key == WatchUi.KEY_ENTER || key == WatchUi.KEY_START) {
+            _controller.toggleProtection();
+            return true;
+        }
+
+        if (key == WatchUi.KEY_DOWN && _controller.isAlarmActive()) {
             _controller.toggleAlarmMute();
             return true;
         }
+
         return false;
     }
 
