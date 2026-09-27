@@ -4,7 +4,7 @@ This file is the repository-wide instruction set for coding agents and autonomou
 
 ## Active development branch
 
-For version `v0.0.0.1`, all implementation, fixes, documentation updates, build tooling, and tests MUST be committed only to branch `v0.0.0.1`.
+For version `v0.0.0.2`, all implementation, fixes, documentation updates, build tooling, and tests MUST be committed only to branch `v0.0.0.2`.
 
 Do not modify `develop` or `master` while working on this version unless the user explicitly instructs a merge, synchronization, or hotfix outside the version branch.
 
@@ -77,7 +77,7 @@ Do not silently change version semantics.
 
 ## Git rules
 
-- For `v0.0.0.1`, work only on branch `v0.0.0.1`.
+- For `v0.0.0.1`, work only on branch `v0.0.0.2`.
 - Do not force-push unless explicitly instructed.
 - Do not rewrite accepted history merely to make it look cleaner.
 - Do not delete ADRs or version records.

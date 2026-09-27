@@ -2,6 +2,20 @@
 
 All notable NearSentry product releases are recorded here.
 
+## [0.0.0.2] - Unreleased
+
+### Added
+- Touch-screen controls on the Garmin watch app.
+- Large on-screen SYSTEM ON/OFF toggle that arms or disarms NearSentry while retaining the physical START/STOP control.
+- On-screen MUTE/UNMUTE button during an active watch alarm.
+
+### Fixed
+- Garmin reconnect state is reconciled from device-setting callbacks, foreground polling, and confirmed phone-app messages.
+- Real separation alarms persist an explicit `alarmRecoverable` flag so reconnect recovery survives watch-app lifecycle/reopen.
+- Reconnect after a real separation alarm clears stale DISCONNECTED/ALARM state, stops watch alarm output, and returns to ARMED without turning protection off.
+- Dart and Android state-machine tests are aligned with ALARM + trusted-anchor recovery -> PROTECTED.
+
+
 ## [0.0.0.1] - 2026-09-23
 
 ### Added
