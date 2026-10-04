@@ -99,11 +99,13 @@ class NearSentryView extends WatchUi.View {
         }
 
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 14, Graphics.FONT_SMALL, "NearSentry V2",
+        dc.drawText(cx, 10, Graphics.FONT_XTINY, "NearSentry by Roni",
+            Graphics.TEXT_JUSTIFY_CENTER);
+        dc.drawText(cx, 29, Graphics.FONT_XTINY, "v0.0.0.2",
             Graphics.TEXT_JUSTIFY_CENTER);
 
         dc.setColor(statusColor, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(cx, 48, Graphics.FONT_LARGE, statusText,
+        dc.drawText(cx, 52, Graphics.FONT_LARGE, statusText,
             Graphics.TEXT_JUSTIFY_CENTER);
 
         dc.setColor(

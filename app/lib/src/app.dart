@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:nearsentry_domain/nearsentry_domain.dart';
 
+import 'app_info.dart';
 import 'controllers/protection_controller.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/diagnostics_screen.dart';
@@ -35,7 +36,7 @@ class _NearSentryAppState extends State<NearSentryApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'NearSentry',
+      title: AppInfo.displayName,
       debugShowCheckedModeBanner: false,
       theme: NearSentryTheme.light(),
       darkTheme: NearSentryTheme.dark(),
@@ -129,7 +130,7 @@ class _HomeShellState extends State<_HomeShell> {
       DiagnosticsScreen(controller: widget.controller),
     ];
     final titles = <String>[
-      'NearSentry',
+      AppInfo.displayName,
       'Event history',
       'Settings',
       'Diagnostics',
@@ -137,7 +138,19 @@ class _HomeShellState extends State<_HomeShell> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(titles[index]),
+        title: index == 0
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(titles[index]),
+                  const Text(
+                    'v${AppInfo.version}',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w400),
+                  ),
+                ],
+              )
+            : Text(titles[index]),
         actions: [
           IconButton(
             tooltip: 'Refresh',

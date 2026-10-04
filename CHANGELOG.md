@@ -5,6 +5,8 @@ All notable NearSentry product releases are recorded here.
 ## [0.0.0.2] - Unreleased
 
 ### Added
+- Added creator branding and visible version identity to both Android and Garmin apps: NearSentry by Roni / v0.0.0.2.
+- Added an Android About screen with creator and version metadata; private email support is wired and will display once the exact address is configured.
 - Touch-screen controls on the Garmin watch app.
 - Large on-screen SYSTEM ON/OFF toggle that arms or disarms NearSentry while retaining the physical START/STOP control.
 - On-screen MUTE/UNMUTE button during an active watch alarm.

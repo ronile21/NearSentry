@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../controllers/protection_controller.dart';
 import '../models/sentry_models.dart';
+import '../app_info.dart';
+import 'about_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, required this.controller});
@@ -98,7 +100,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(height: 16),
         FilledButton(onPressed: _save, child: const Text('Save settings')),
         const SizedBox(height: 24),
-        const Text('NearSentry v0.0.0.1'),
+        const Divider(),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.info_outline),
+          title: const Text('About'),
+          subtitle: const Text(
+            '${AppInfo.displayName} • v${AppInfo.version}',
+          ),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AboutScreen(),
+              ),
+            );
+          },
+        ),
       ],
     );
   }
