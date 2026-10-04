@@ -3,7 +3,19 @@ setlocal EnableExtensions EnableDelayedExpansion
 
 cd /d "%~dp0"
 
-set "EXPECTED_BRANCH=v0.0.0.1"
+if not exist "%CD%\VERSION" (
+    echo [ERROR] VERSION file was not found at:
+    echo         %CD%\VERSION
+    exit /b 1
+)
+
+set /p "PROJECT_VERSION="<"%CD%\VERSION"
+if not defined PROJECT_VERSION (
+    echo [ERROR] VERSION file is empty.
+    exit /b 1
+)
+
+set "EXPECTED_BRANCH=v%PROJECT_VERSION%"
 set "WATCH_DIR=%CD%\watch\garmin"
 set "BUILD_DIR=%WATCH_DIR%\build"
 set "LOCAL_KEY_DER=%WATCH_DIR%\developer_key.der"
@@ -13,7 +25,7 @@ set "SDK_CFG=%APPDATA%\Garmin\ConnectIQ\current-sdk.cfg"
 
 echo.
 echo ============================================================
-echo  NearSentry v0.0.0.1 - GARMIN FENIX 7X BUILD
+echo  NearSentry %PROJECT_VERSION% - GARMIN FENIX 7X BUILD
 echo ============================================================
 echo.
 
@@ -121,6 +133,12 @@ echo.
 echo ============================================================
 echo  SUCCESS
 echo ============================================================
+echo  Version:
+echo  %PROJECT_VERSION%
+echo.
+echo  Branch:
+echo  %CURRENT_BRANCH%
+echo.
 echo  SDK:
 echo  %CIQ_HOME%
 echo.

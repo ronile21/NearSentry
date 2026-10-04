@@ -3,14 +3,26 @@ setlocal EnableExtensions
 
 cd /d "%~dp0"
 
-set "EXPECTED_BRANCH=v0.0.0.1"
+if not exist "%CD%\VERSION" (
+    echo [ERROR] VERSION file was not found at:
+    echo         %CD%\VERSION
+    exit /b 1
+)
+
+set /p "PROJECT_VERSION="<"%CD%\VERSION"
+if not defined PROJECT_VERSION (
+    echo [ERROR] VERSION file is empty.
+    exit /b 1
+)
+
+set "EXPECTED_BRANCH=v%PROJECT_VERSION%"
 set "APP_DIR=%CD%\app"
 set "PACKAGE_ID=com.nearsentry.app"
 set "APK_PATH=%APP_DIR%\build\app\outputs\flutter-apk\app-debug.apk"
 
 echo.
 echo ============================================================
-echo  NearSentry v0.0.0.1 - BUILD + INSTALL
+echo  NearSentry %PROJECT_VERSION% - BUILD + INSTALL
 echo  NO CLEAN / NO UNINSTALL / APP DATA PRESERVED
 echo ============================================================
 echo.
@@ -82,6 +94,7 @@ echo.
 echo ============================================================
 echo  SUCCESS
 echo ============================================================
+echo  Version: %PROJECT_VERSION%
 echo  Branch : %CURRENT_BRANCH%
 echo  APK    : %APK_PATH%
 echo  Package: %PACKAGE_ID%
