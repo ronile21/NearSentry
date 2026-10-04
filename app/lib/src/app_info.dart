@@ -7,5 +7,5 @@ class AppInfo {
   static const String version = '0.0.0.2';
 
   // Filled only after the owner provides the exact private email address.
-  static const String ownerEmail = '';
+  static const String ownerEmail = 'Roni.Leiderman@gmail.com';
 }
